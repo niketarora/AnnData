@@ -1,0 +1,38 @@
+import { Router } from 'express';
+import { authRoutes } from './auth.routes.js';
+import { farmersRoutes } from './farmers.routes.js';
+import { buyersRoutes } from './buyers.routes.js';
+import { cropsRoutes } from './crops.routes.js';
+import { marketsRoutes } from './markets.routes.js';
+import { demandsRoutes } from './demands.routes.js';
+import { lotsRoutes } from './lots.routes.js';
+import { bookingsRoutes } from './bookings.routes.js';
+import { queueRoutes } from './queue.routes.js';
+import { inspectionsRoutes } from './inspections.routes.js';
+import { weighmentsRoutes } from './weighments.routes.js';
+import { offersRoutes } from './offers.routes.js';
+import { transactionsRoutes } from './transactions.routes.js';
+import { paymentsRoutes } from './payments.routes.js';
+import { notificationsRoutes } from './notifications.routes.js';
+import { grievancesRoutes } from './grievances.routes.js';
+import { analyticsRoutes } from './analytics.routes.js';
+
+export const apiRouter = Router();
+
+apiRouter.use('/auth', authRoutes);
+apiRouter.use('/farmers', farmersRoutes);
+apiRouter.use('/buyers', buyersRoutes);
+apiRouter.use('/crops', cropsRoutes);
+apiRouter.use('/markets', marketsRoutes);
+apiRouter.use('/demands', demandsRoutes);
+apiRouter.use('/lots', lotsRoutes);
+apiRouter.use('/bookings', bookingsRoutes);
+apiRouter.use('/queue', queueRoutes);
+apiRouter.use('/inspections', inspectionsRoutes);
+apiRouter.use('/weighments', weighmentsRoutes);
+apiRouter.use('/offers', offersRoutes);
+apiRouter.use('/transactions', transactionsRoutes);
+apiRouter.use('/payments', paymentsRoutes);
+apiRouter.use('/notifications', notificationsRoutes);
+apiRouter.use('/grievances', grievancesRoutes);
+apiRouter.use('/analytics', analyticsRoutes);
