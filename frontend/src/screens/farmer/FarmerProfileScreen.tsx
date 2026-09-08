@@ -9,6 +9,7 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { SecondaryButton } from '../../components/common/SecondaryButton';
 import { FarmerStackParamList } from '../../types';
+import { navigationRef } from '../../navigation/RootNavigator';
 
 export const FarmerProfileScreen: React.FC = () => {
   const [state, store] = useAppStore();
@@ -19,6 +20,9 @@ export const FarmerProfileScreen: React.FC = () => {
 
   const handleSwitchToBuyer = () => {
     store.setRole('BUYER');
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('BuyerRoot');
+    }
   };
 
   return (

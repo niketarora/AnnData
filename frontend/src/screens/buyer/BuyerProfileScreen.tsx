@@ -30,6 +30,7 @@ import { SecondaryButton } from '../../components/common/SecondaryButton';
 import { StatusChip } from '../../components/common/StatusChip';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BuyerStackParamList } from '../../types/navigation';
+import { navigationRef } from '../../navigation/RootNavigator';
 
 type Props = NativeStackScreenProps<BuyerStackParamList, 'BuyerProfile'>;
 
@@ -40,6 +41,9 @@ export const BuyerProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleSwitchToFarmer = () => {
     mockStore.setRole('FARMER');
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('FarmerRoot');
+    }
   };
 
   const handleResetDemo = () => {

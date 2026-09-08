@@ -24,13 +24,19 @@ export const RootNavigator: React.FC = () => {
   // Whenever role is changed via DemoToolbar or screen action,
   // route to the appropriate portal root if already past auth
   useEffect(() => {
-    if (navigationRef.isReady()) {
-      const currentRoute = navigationRef.getCurrentRoute()?.name;
-      if (currentRoute === 'FarmerRoot' && state.currentRole === 'BUYER') {
-        navigationRef.navigate('BuyerRoot');
-      } else if (currentRoute === 'BuyerRoot' && state.currentRole === 'FARMER') {
-        navigationRef.navigate('FarmerRoot');
-      }
+    if (!navigationRef.isReady()) return;
+    const currentRoute = navigationRef.getCurrentRoute()?.name;
+    const authScreens = ['Welcome', 'RoleSelection', 'LoginOTP', 'FarmerOnboarding'];
+    
+    // Don't auto-redirect if user is still on onboarding/welcome screens
+    if (currentRoute && authScreens.includes(currentRoute)) {
+      return;
+    }
+
+    if (state.currentRole === 'BUYER') {
+      navigationRef.navigate('BuyerRoot');
+    } else if (state.currentRole === 'FARMER') {
+      navigationRef.navigate('FarmerRoot');
     }
   }, [state.currentRole]);
 

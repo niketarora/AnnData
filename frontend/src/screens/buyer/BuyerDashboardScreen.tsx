@@ -9,6 +9,7 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { MetricCard } from '../../components/common/MetricCard';
 import { StatusChip } from '../../components/common/StatusChip';
 import { BuyerStackParamList } from '../../types';
+import { navigationRef } from '../../navigation/RootNavigator';
 
 export const BuyerDashboardScreen: React.FC = () => {
   const [state, store] = useAppStore();
@@ -46,6 +47,29 @@ export const BuyerDashboardScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* Quick Portal Switcher to Farmer Mode */}
+        <TouchableOpacity
+          style={styles.portalSwitchBanner}
+          onPress={() => {
+            store.setRole('FARMER');
+            if (navigationRef.isReady()) {
+              navigationRef.navigate('FarmerRoot');
+            }
+          }}
+          activeOpacity={0.85}
+        >
+          <View style={styles.portalSwitchLeft}>
+            <View style={styles.portalSwitchIcon}>
+              <Ionicons name="person" size={18} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.portalSwitchTitle}>Switch to Kisan (Farmer) Portal</Text>
+              <Text style={styles.portalSwitchSub}>View lots, market intelligence, and true net realization</Text>
+            </View>
+          </View>
+          <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+        </TouchableOpacity>
 
         {/* Primary Operational KPIs 2x2 + Big Total */}
         <View style={styles.kpiGrid}>
@@ -415,5 +439,40 @@ const styles = StyleSheet.create({
   reviewActionText: {
     ...typography.captionBold,
     color: colors.primaryLight,
+  },
+  portalSwitchBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    borderRadius: radius.lg,
+    padding: spacing.spaceMd,
+    marginTop: spacing.spaceMd,
+  },
+  portalSwitchLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.spaceMd,
+    flex: 1,
+  },
+  portalSwitchIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#DCFCE7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  portalSwitchTitle: {
+    ...typography.bodyBaseMedium,
+    color: '#166534',
+    fontWeight: '600',
+  },
+  portalSwitchSub: {
+    ...typography.caption,
+    color: '#15803D',
+    marginTop: 1,
   },
 });

@@ -16,6 +16,7 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { RecommendationCard } from '../../components/decision/RecommendationCard';
 import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
 import { FarmerStackParamList } from '../../types';
+import { navigationRef } from '../../navigation/RootNavigator';
 
 export const FarmerHomeScreen: React.FC = () => {
   const [state, store] = useAppStore();
@@ -55,6 +56,29 @@ export const FarmerHomeScreen: React.FC = () => {
             <Text style={styles.liveSyncText}>Live Sync active</Text>
           </View>
         </View>
+
+        {/* Quick Portal Switcher to Buyer Mode */}
+        <TouchableOpacity
+          style={styles.portalSwitchBanner}
+          onPress={() => {
+            store.setRole('BUYER');
+            if (navigationRef.isReady()) {
+              navigationRef.navigate('BuyerRoot');
+            }
+          }}
+          activeOpacity={0.85}
+        >
+          <View style={styles.portalSwitchLeft}>
+            <View style={styles.portalSwitchIcon}>
+              <Ionicons name="business" size={18} color="#0284C7" />
+            </View>
+            <View>
+              <Text style={styles.portalSwitchTitle}>Switch to Mandi Buyer / Trader Portal</Text>
+              <Text style={styles.portalSwitchSub}>Procurement demands, inspection bay, weighbridge & escrow</Text>
+            </View>
+          </View>
+          <Ionicons name="arrow-forward" size={18} color="#0284C7" />
+        </TouchableOpacity>
 
         {/* Today's Booking Urgency Alert Card */}
         {activeBooking && (
@@ -770,5 +794,40 @@ const styles = StyleSheet.create({
   viewHistoryText: {
     ...typography.bodyBaseMedium,
     color: colors.textPrimary,
+  },
+  portalSwitchBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0F9FF',
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    borderRadius: radius.lg,
+    padding: spacing.spaceMd,
+    marginTop: spacing.spaceMd,
+  },
+  portalSwitchLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.spaceMd,
+    flex: 1,
+  },
+  portalSwitchIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  portalSwitchTitle: {
+    ...typography.bodyBaseMedium,
+    color: '#0369A1',
+    fontWeight: '600',
+  },
+  portalSwitchSub: {
+    ...typography.caption,
+    color: '#0284C7',
+    marginTop: 1,
   },
 });

@@ -3,13 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { useAppStore } from '../../store';
+import { navigationRef } from '../../navigation/RootNavigator';
 
 export const DemoToolbar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [state, store] = useAppStore();
 
   const toggleRole = () => {
-    store.setRole(state.currentRole === 'FARMER' ? 'BUYER' : 'FARMER');
+    const nextRole = state.currentRole === 'FARMER' ? 'BUYER' : 'FARMER';
+    store.setRole(nextRole);
+    if (navigationRef.isReady()) {
+      navigationRef.navigate(nextRole === 'BUYER' ? 'BuyerRoot' : 'FarmerRoot');
+    }
   };
 
   return (
