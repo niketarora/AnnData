@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -7,23 +7,34 @@ import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { StatusChip } from '../../components/common/StatusChip';
+import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { BuyerStackParamList } from '../../types';
 
-export const QueueControlPanelScreen: React.FC = () => {
+interface QueueControlPanelScreenProps {
+  showBack?: boolean;
+}
+
+export const QueueControlPanelScreen: React.FC<QueueControlPanelScreenProps> = ({ showBack = true }) => {
   const [state, store] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<BuyerStackParamList>>();
+  const [queueAction, setQueueAction] = useState<number | 'clear' | null>(null);
 
-  const handleCallLot = () => {
-    store.clearQueueDelay();
+  const confirmQueueAction = () => {
+    if (queueAction === 'clear') {
+      store.clearQueueDelay();
+    } else if (typeof queueAction === 'number') {
+      store.addQueueDelay(queueAction);
+    }
+    setQueueAction(null);
   };
 
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Live Queue Control"
-        subtitle="Weighbridge & Gate Dispatch"
-        showBack
-        onBack={() => navigation.goBack()}
+        title="Queue"
+        subtitle="Gate and weighbridge"
+        showBack={showBack}
+        onBack={showBack ? () => navigation.goBack() : undefined}
         onNotificationPress={() => navigation.navigate('BuyerNotifications')}
         onProfilePress={() => navigation.navigate('BuyerProfile')}
       />
@@ -38,16 +49,16 @@ export const QueueControlPanelScreen: React.FC = () => {
           <View style={styles.statusLeft}>
             <View style={styles.dot} />
             <Text style={styles.statusText}>
-              Inflow Counter 4 • {state.queue.delayMinutes > 0 ? `+${state.queue.delayMinutes}m Gate Delay` : 'Operating at Velocity'}
+              Counter 4 • {state.queue.delayMinutes > 0 ? `${state.queue.delayMinutes} min delay` : 'Running on time'}
             </Text>
           </View>
-          <Text style={styles.queueTotalText}>{state.queue.totalQueueLoad} Total Queue</Text>
+          <Text style={styles.queueTotalText}>{state.queue.totalQueueLoad} lots waiting</Text>
         </View>
 
         {/* Now Serving Card */}
         <View style={styles.servingCard}>
           <View style={styles.servingHeader}>
-            <Text style={styles.cardHeaderLabel}>CURRENTLY ON WEIGHBRIDGE</Text>
+            <Text style={styles.cardHeaderLabel}>NOW ON WEIGHBRIDGE</Text>
             <View style={styles.weighPill}>
               <Ionicons name="speedometer" size={13} color={colors.info} />
               <Text style={styles.weighPillText}>Scale #2 Active</Text>
@@ -73,53 +84,53 @@ export const QueueControlPanelScreen: React.FC = () => {
               activeOpacity={0.85}
             >
               <Ionicons name="checkmark-done" size={18} color={colors.onPrimary} />
-              <Text style={styles.completeWeighText}>Complete Weighment & Call Next</Text>
+              <Text style={styles.completeWeighText}>Finish weighing and call next</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Delay & Dispatch Operational Controls */}
         <View style={styles.controlsCard}>
-          <Text style={styles.cardHeaderLabel}>GATE VELOCITY & DELAY CONTROLS</Text>
+          <Text style={styles.cardHeaderLabel}>CHANGE FARMER LEAVE TIME</Text>
           <Text style={styles.controlsDesc}>
-            Adjusting gate delay automatically broadcasts WAIT or LEAVE NOW state signals to farmer devices.
+            Farmers receive this update immediately. Check the gate before sending it.
           </Text>
 
           <View style={styles.delayButtonsRow}>
             <TouchableOpacity
               style={styles.delayBtn}
-              onPress={() => store.addQueueDelay(10)}
+              onPress={() => setQueueAction(10)}
             >
               <Text style={styles.delayBtnText}>+10 min</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.delayBtn, { backgroundColor: colors.warningTint }]}
-              onPress={() => store.addQueueDelay(20)}
+              onPress={() => setQueueAction(20)}
             >
               <Text style={[styles.delayBtnText, { color: colors.warningDark }]}>+20 min</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.delayBtn, { backgroundColor: colors.dangerTint }]}
-              onPress={() => store.addQueueDelay(30)}
+              onPress={() => setQueueAction(30)}
             >
               <Text style={[styles.delayBtnText, { color: colors.dangerDark }]}>+30 min</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.delayBtn, { backgroundColor: colors.successTint }]}
-              onPress={() => store.clearQueueDelay()}
+              onPress={() => setQueueAction('clear')}
             >
               <Ionicons name="flash" size={14} color={colors.success} />
-              <Text style={[styles.delayBtnText, { color: colors.successDark }]}>Clear</Text>
+              <Text style={[styles.delayBtnText, { color: colors.successDark }]}>Leave now</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Next Farmers in Queue */}
         <View style={styles.queueListSection}>
-          <Text style={styles.cardHeaderLabel}>NEXT FARMERS IN INFLOW QUEUE</Text>
+          <Text style={styles.cardHeaderLabel}>NEXT FARMERS</Text>
 
           {/* Item 1: Rajesh Kumar */}
           <View style={styles.queueRowCard}>
@@ -155,9 +166,9 @@ export const QueueControlPanelScreen: React.FC = () => {
 
               <TouchableOpacity
                 style={styles.callFarmerQuickBtn}
-                onPress={handleCallLot}
+                onPress={() => setQueueAction('clear')}
               >
-                <Text style={styles.callFarmerQuickText}>Call Now</Text>
+                <Text style={styles.callFarmerQuickText}>Send leave now</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -191,6 +202,21 @@ export const QueueControlPanelScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      <ConfirmationModal
+        visible={queueAction !== null}
+        title={queueAction === 'clear' ? 'Tell farmers to leave now?' : `Add ${queueAction} minute delay?`}
+        message={
+          queueAction === 'clear'
+            ? 'Waiting farmers will be told to leave for the mandi now.'
+            : `Waiting farmers will be told to remain at home for ${queueAction} more minutes.`
+        }
+        confirmText="Send update"
+        cancelText="Cancel"
+        iconName="megaphone-outline"
+        onConfirm={confirmQueueAction}
+        onCancel={() => setQueueAction(null)}
+      />
     </View>
   );
 };

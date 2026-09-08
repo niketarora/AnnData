@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { DepartureState } from '../../types';
@@ -9,8 +9,6 @@ interface DecisionBannerProps {
   delayMinutes: number;
   revisedDepartureTime: string;
   gateNotice?: string;
-  onStateChange?: (state: DepartureState) => void;
-  showSimulator?: boolean;
 }
 
 export const DecisionBanner: React.FC<DecisionBannerProps> = ({
@@ -18,8 +16,6 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
   delayMinutes,
   revisedDepartureTime,
   gateNotice = 'Live sync from Mandi Operator counter 4',
-  onStateChange,
-  showSimulator = true,
 }) => {
   const isWait = departureState === 'WAIT' || departureState === 'DELAYED';
   const isReady = departureState === 'GET_READY';
@@ -32,9 +28,9 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
         border: colors.warning,
         badgeBg: colors.card,
         badgeText: colors.warning,
-        title: 'WAIT — Do Not Leave Yet',
+        title: 'WAIT AT HOME',
         icon: 'hourglass-outline' as keyof typeof Ionicons.glyphMap,
-        body: `Mandi unloading queue is delayed by ~${delayMinutes} min. Do not leave your farm yet. Next departure ETA: ${revisedDepartureTime}.`,
+        body: `The mandi is delayed by ${delayMinutes} minutes. Leave at ${revisedDepartureTime}.`,
       };
     } else if (isReady) {
       return {
@@ -42,9 +38,9 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
         border: colors.info,
         badgeBg: colors.card,
         badgeText: colors.info,
-        title: 'GET READY — Prepare Carrier',
+        title: 'GET READY',
         icon: 'time-outline' as keyof typeof Ionicons.glyphMap,
-        body: `Your slot begins in ~20 mins. Hitch tractor trolley and secure grain cover. Target departure: ${revisedDepartureTime}.`,
+        body: `Your turn is coming soon. Prepare your vehicle and crop. Leave at ${revisedDepartureTime}.`,
       };
     } else {
       return {
@@ -52,9 +48,11 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
         border: colors.success,
         badgeBg: colors.card,
         badgeText: colors.success,
-        title: 'LEAVE NOW — Gate Express Open',
+        title: departureState === 'ARRIVED' ? 'GO TO GATE 2' : 'LEAVE NOW',
         icon: 'navigate-circle-outline' as keyof typeof Ionicons.glyphMap,
-        body: `Gate queue is clear. Depart now for Taraori Mandi Gate 2 Express Line (~35 min transit).`,
+        body: departureState === 'ARRIVED'
+          ? 'Show your token at Gate 2 for weighing.'
+          : 'The gate is ready. Leave for Taraori Mandi now.',
       };
     }
   };
@@ -69,12 +67,12 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
           <View style={[styles.statusBadge, { backgroundColor: theme.badgeBg }]}>
             <View style={[styles.pulseDot, { backgroundColor: theme.badgeText }]} />
             <Text style={[styles.statusBadgeText, { color: theme.badgeText }]}>
-              ACTION: {departureState.replace('_', ' ')}
+              Updated just now
             </Text>
           </View>
           <View style={styles.liveNotice}>
             <Ionicons name="radio" size={13} color={colors.textSecondary} />
-            <Text style={styles.liveNoticeText}>Gate 4 Live</Text>
+            <Text style={styles.liveNoticeText}>Gate 2 live</Text>
           </View>
         </View>
 
@@ -87,37 +85,6 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
         {/* Descriptive Body */}
         <Text style={styles.bodyText}>{theme.body}</Text>
 
-        {/* Simulation switcher for testing states */}
-        {showSimulator && onStateChange && (
-          <View style={styles.simBar}>
-            <TouchableOpacity
-              style={[styles.simButton, isWait && styles.simButtonActiveWait]}
-              onPress={() => onStateChange('WAIT')}
-            >
-              <Text style={[styles.simButtonText, isWait && styles.simButtonTextActive]}>
-                WAIT (Farm)
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.simButton, isReady && styles.simButtonActiveReady]}
-              onPress={() => onStateChange('GET_READY')}
-            >
-              <Text style={[styles.simButtonText, isReady && styles.simButtonTextActive]}>
-                GET READY
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.simButton, isLeave && styles.simButtonActiveLeave]}
-              onPress={() => onStateChange('LEAVE_NOW')}
-            >
-              <Text style={[styles.simButtonText, isLeave && styles.simButtonTextActive]}>
-                LEAVE NOW
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
       {/* Operator Live Sync Footer */}
@@ -187,47 +154,19 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   headlineText: {
-    ...typography.headlineMd,
+    ...typography.headlineXl,
     color: colors.textPrimary,
     fontWeight: '700',
+    fontSize: 28,
+    lineHeight: 36,
+    flexShrink: 1,
   },
   bodyText: {
-    ...typography.bodyBase,
+    ...typography.bodyLg,
     color: colors.textPrimary,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 25,
     marginTop: 2,
-  },
-  simBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderRadius: radius.md,
-    padding: 3,
-    marginTop: spacing.spaceMd,
-    gap: 4,
-  },
-  simButton: {
-    flex: 1,
-    paddingVertical: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-  },
-  simButtonActiveWait: {
-    backgroundColor: colors.warning,
-  },
-  simButtonActiveReady: {
-    backgroundColor: colors.info,
-  },
-  simButtonActiveLeave: {
-    backgroundColor: colors.primaryLight,
-  },
-  simButtonText: {
-    ...typography.captionBold,
-    color: colors.textSecondary,
-  },
-  simButtonTextActive: {
-    color: colors.onPrimary,
   },
   footerRow: {
     flexDirection: 'row',

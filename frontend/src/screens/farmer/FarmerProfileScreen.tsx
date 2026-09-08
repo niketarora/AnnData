@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -6,20 +6,13 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
-import { PrimaryButton } from '../../components/common/PrimaryButton';
-import { SecondaryButton } from '../../components/common/SecondaryButton';
+import type { FarmerLanguage } from '../../i18n/farmerCopy';
 import { FarmerStackParamList } from '../../types';
 
 export const FarmerProfileScreen: React.FC = () => {
   const [state, store] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
-  const [selectedLang, setSelectedLang] = useState<'en' | 'hi' | 'pa'>('en');
-
   const farmer = state.farmer;
-
-  const handleSwitchToBuyer = () => {
-    store.setRole('BUYER');
-  };
 
   return (
     <View style={styles.container}>
@@ -97,13 +90,15 @@ export const FarmerProfileScreen: React.FC = () => {
             ].map((lang) => (
               <TouchableOpacity
                 key={lang.id}
-                style={[styles.langChip, selectedLang === lang.id && styles.langChipActive]}
-                onPress={() => setSelectedLang(lang.id as any)}
+                style={[styles.langChip, state.language === lang.id && styles.langChipActive]}
+                onPress={() => store.setLanguage(lang.id as FarmerLanguage)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: state.language === lang.id }}
               >
                 <Text
                   style={[
                     styles.langChipText,
-                    selectedLang === lang.id && styles.langChipTextActive,
+                    state.language === lang.id && styles.langChipTextActive,
                   ]}
                 >
                   {lang.label}
@@ -113,28 +108,6 @@ export const FarmerProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Role Switching & Demo Reset */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionLabel}>DEMO ROLE SWITCHER</Text>
-          <Text style={styles.demoNotice}>
-            Switch instantly to the Mandi Operator / Institutional Buyer view to inspect incoming farmer lots and submit bids.
-          </Text>
-
-          <PrimaryButton
-            title="Switch to Mandi Buyer / Trader Mode"
-            iconName="business-outline"
-            variant="darkGreen"
-            onPress={handleSwitchToBuyer}
-            style={{ marginTop: 4 }}
-          />
-
-          <SecondaryButton
-            title="Reset All Demo Data to Initial State"
-            iconName="refresh-outline"
-            onPress={() => store.resetScenario()}
-            style={{ marginTop: 8 }}
-          />
-        </View>
       </ScrollView>
     </View>
   );
@@ -289,10 +262,5 @@ const styles = StyleSheet.create({
   langChipTextActive: {
     color: colors.onPrimary,
     fontWeight: '600',
-  },
-  demoNotice: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    lineHeight: 18,
   },
 });

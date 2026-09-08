@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Linking, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -11,7 +11,7 @@ import { SecondaryButton } from '../../components/common/SecondaryButton';
 import { FarmerStackParamList } from '../../types';
 
 export const PaymentStatusScreen: React.FC = () => {
-  const [state, store] = useAppStore();
+  const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
   const route = useRoute<RouteProp<FarmerStackParamList, 'PaymentStatus'>>();
 
@@ -32,8 +32,8 @@ export const PaymentStatusScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Payment Status"
-        subtitle="Electronic Mandi Settlement"
+        title="Payment"
+        subtitle="Money sent to your bank"
         showBack
         onBack={() => navigation.navigate('FarmerHome')}
         onNotificationPress={() => navigation.navigate('Notifications')}
@@ -55,17 +55,17 @@ export const PaymentStatusScreen: React.FC = () => {
         </View>
 
         <Text style={styles.statusTitle}>
-          {isPaid ? 'Payment Received Successfully!' : 'Payment in Clearance'}
+          {isPaid ? 'Money received' : 'Payment pending'}
         </Text>
         <Text style={styles.statusSub}>
           {isPaid
-            ? 'Credited directly to your State Bank of India account via Mandi Direct Settlement.'
-            : 'Buyer has approved payment release. Mandi clearing bank processing settlement.'}
+            ? 'The money was sent to your State Bank of India account ending in 8492.'
+            : 'The buyer approved your payment. It usually reaches your bank within 30 minutes.'}
         </Text>
 
         {/* Hero Amount Card */}
         <View style={styles.payoutCard}>
-          <Text style={styles.payoutCardLabel}>SETTLED AMOUNT</Text>
+          <Text style={styles.payoutCardLabel}>{isPaid ? 'AMOUNT RECEIVED' : 'AMOUNT ON THE WAY'}</Text>
           <Text style={styles.payoutAmountText}>
             ₹{(txn?.netAmount || 48654.5).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </Text>
@@ -73,7 +73,7 @@ export const PaymentStatusScreen: React.FC = () => {
           <View style={styles.statusPill}>
             <View style={[styles.dot, { backgroundColor: isPaid ? colors.success : colors.warning }]} />
             <Text style={[styles.statusPillText, { color: isPaid ? colors.success : colors.warning }]}>
-              {isPaid ? 'PAID & SETTLED' : 'PROCESSING ESCROW'}
+              {isPaid ? 'MONEY RECEIVED' : 'PAYMENT PENDING'}
             </Text>
           </View>
 
@@ -89,42 +89,39 @@ export const PaymentStatusScreen: React.FC = () => {
               <Text style={styles.txnValue}>{txn?.bankReference || 'UPI-CR-20260908-98124'}</Text>
             </View>
             <View style={styles.txnRow}>
-              <Text style={styles.txnLabel}>Beneficiary Account</Text>
+              <Text style={styles.txnLabel}>Bank account</Text>
               <Text style={styles.txnValue}>SBI A/C ••8492 (Rajesh Kumar)</Text>
             </View>
             <View style={styles.txnRow}>
-              <Text style={styles.txnLabel}>Settlement Timestamp</Text>
+              <Text style={styles.txnLabel}>Last updated</Text>
               <Text style={styles.txnValue}>08 Sep 2026, 04:18 PM</Text>
             </View>
           </View>
         </View>
 
-        {/* Simulator button to mark as paid if not already */}
-        {!isPaid && (
-          <TouchableOpacity
-            style={styles.simReleaseBtn}
-            onPress={() => store.releasePayment()}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="flash" size={16} color={colors.success} />
-            <Text style={styles.simReleaseText}>Simulate Instant Bank Credit (Mark Paid)</Text>
-          </TouchableOpacity>
-        )}
-
         {/* Action Buttons */}
         <View style={styles.actionsCol}>
           <PrimaryButton
-            title="View Digital Mandi J-Form Receipt"
+            title="View receipt"
             iconName="receipt-outline"
             onPress={() => navigation.navigate('DigitalReceipt', { transactionId: txn?.id })}
           />
 
           <SecondaryButton
-            title="Share Payment Voucher"
+            title="Share payment receipt"
             iconName="share-social-outline"
             variant="outline"
             onPress={handleShare}
           />
+
+          {!isPaid && (
+            <SecondaryButton
+              title="Report missing payment"
+              iconName="call-outline"
+              variant="outline"
+              onPress={() => Linking.openURL('tel:18001239876')}
+            />
+          )}
         </View>
       </ScrollView>
     </View>

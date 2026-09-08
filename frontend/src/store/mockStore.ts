@@ -15,9 +15,11 @@ import {
   Transaction,
   AppNotification,
 } from '../types';
+import type { FarmerLanguage } from '../i18n/farmerCopy';
 
 export interface AppState {
   currentRole: UserRole;
+  language: FarmerLanguage;
   farmer: FarmerProfile;
   buyer: BuyerProfile;
   lots: CropLot[];
@@ -526,6 +528,7 @@ class MockStore {
   private getFreshSeedState(): AppState {
     return {
       currentRole: 'FARMER',
+      language: 'en',
       farmer: JSON.parse(JSON.stringify(initialFarmer)),
       buyer: JSON.parse(JSON.stringify(initialBuyer)),
       lots: JSON.parse(JSON.stringify(initialLots)),
@@ -570,6 +573,11 @@ class MockStore {
   // Cross-User Role Switching
   public setRole(role: UserRole): void {
     this.state.currentRole = role;
+    this.notify();
+  }
+
+  public setLanguage(language: FarmerLanguage): void {
+    this.state.language = language;
     this.notify();
   }
 
@@ -854,7 +862,27 @@ class MockStore {
   }
 
   public resetScenario(): void {
+    const language = this.state.language;
     this.state = this.getFreshSeedState();
+    this.state.language = language;
+    this.notify();
+  }
+
+  public requestBetterOffer(): void {
+    this.addNotification({
+      recipientRole: 'BUYER',
+      category: 'OFFER',
+      title: 'Farmer requested a better price',
+      message: 'Rajesh Kumar asked you to review and improve the current crop offer.',
+      actionRoute: 'BuyerTransactions',
+    });
+    this.addNotification({
+      recipientRole: 'FARMER',
+      category: 'OFFER',
+      title: 'Request sent',
+      message: 'The buyer has been asked to send a better price.',
+      actionRoute: 'FarmerOfferDecision',
+    });
     this.notify();
   }
 }

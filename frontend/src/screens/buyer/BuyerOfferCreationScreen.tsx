@@ -45,7 +45,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
   const netQuintals = weighment?.netQuintals || 19.7;
   const [offeredRate, setOfferedRate] = useState<string>('2520');
   const [remarks, setRemarks] = useState<string>(
-    'Grade A premium rate for low-moisture Sharbati lot. Direct DBT transfer ready.'
+    'Grade A price for low-moisture Sharbati wheat. Payment will be sent after acceptance.'
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,12 +55,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
   const weighmentFee = 245.0; // Fixed Weighbridge charge
   const netPayout = Math.max(0, grossAmount - mandiFee - weighmentFee);
 
-  const handleSendOffer = () => {
-    if (rateNumber <= 0) {
-      Alert.alert('Invalid Rate', 'Please enter a valid price per quintal.');
-      return;
-    }
-
+  const submitOffer = () => {
     setSubmitting(true);
     mockStore.submitOffer({
       id: `offer-${Date.now()}`,
@@ -85,19 +80,13 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
     setTimeout(() => {
       setSubmitting(false);
       Alert.alert(
-        'Offer Sent to Farmer!',
-        `Your binding offer of ₹${netPayout.toLocaleString('en-IN', {
+        'Offer sent',
+        `Your offer of ₹${netPayout.toLocaleString('en-IN', {
           maximumFractionDigits: 2,
-        })} has been pushed to Rajesh Kumar's device.`,
+        })} was sent to Rajesh Kumar.`,
         [
           {
-            text: 'Switch to Farmer View (Test Accept)',
-            onPress: () => {
-              mockStore.setRole('FARMER');
-            },
-          },
-          {
-            text: 'Go to Transactions',
+            text: 'Open payments',
             onPress: () => navigation.navigate('BuyerTransactions'),
           },
         ]
@@ -105,10 +94,26 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
     }, 400);
   };
 
+  const handleSendOffer = () => {
+    if (rateNumber <= 0) {
+      Alert.alert('Check offered rate', 'Enter a valid price per quintal.');
+      return;
+    }
+
+    Alert.alert(
+      `Send offer of ₹${Math.round(netPayout).toLocaleString('en-IN')}?`,
+      `${lot.farmerName} will see ₹${rateNumber.toLocaleString('en-IN')} per quintal and a final amount of ₹${Math.round(netPayout).toLocaleString('en-IN')}.`,
+      [
+        { text: 'Check again', style: 'cancel' },
+        { text: 'Send offer', onPress: submitOffer },
+      ],
+    );
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Create Purchase Offer"
+        title="Send price offer"
         subtitle={`Token #${booking?.tokenNumber || 'MKT-B-142'} • ${lot.farmerName}`}
         showBack
         onBack={() => navigation.goBack()}
@@ -125,16 +130,16 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
               <Text style={styles.cropTitle}>{lot.variety} {lot.crop}</Text>
               <Text style={styles.cropSub}>Farmer: {lot.farmerName} • Lot #{lot.id}</Text>
             </View>
-            <StatusChip label="VERIFIED READY" status="success" />
+            <StatusChip label="READY FOR OFFER" status="success" />
           </View>
 
           <View style={styles.metricsRow}>
             <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Verified Net Weight</Text>
+              <Text style={styles.metricLabel}>Final weight</Text>
               <Text style={styles.metricValue}>{netQuintals} QTL</Text>
             </View>
             <View style={styles.metricItem}>
-              <Text style={styles.metricLabel}>Physical Grade</Text>
+              <Text style={styles.metricLabel}>Quality grade</Text>
               <Text style={[styles.metricValue, { color: colors.primary }]}>
                 {inspection?.physicalGrade || 'Grade A'} (89/100)
               </Text>
@@ -150,19 +155,19 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
         <View style={styles.marketContextCard}>
           <View style={styles.contextHeader}>
             <TrendingUp size={16} color={colors.primary} />
-            <Text style={styles.contextTitle}>Mandi Price Benchmarks</Text>
+            <Text style={styles.contextTitle}>Today’s mandi prices</Text>
           </View>
           <View style={styles.benchmarkRow}>
             <View style={styles.benchmarkItem}>
-              <Text style={styles.benchLabel}>APMC Modal Rate</Text>
+              <Text style={styles.benchLabel}>Average price</Text>
               <Text style={styles.benchVal}>₹2,470 / QTL</Text>
             </View>
             <View style={styles.benchmarkItem}>
-              <Text style={styles.benchLabel}>Grade A Ceiling</Text>
+              <Text style={styles.benchLabel}>Highest Grade A</Text>
               <Text style={styles.benchVal}>₹2,580 / QTL</Text>
             </View>
             <View style={styles.benchmarkItem}>
-              <Text style={styles.benchLabel}>Your Demand Max</Text>
+              <Text style={styles.benchLabel}>Your maximum</Text>
               <Text style={styles.benchValHighlight}>₹2,550 / QTL</Text>
             </View>
           </View>
@@ -170,9 +175,9 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
 
         {/* Offer Input */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Set Offered Rate</Text>
+          <Text style={styles.cardTitle}>Your price per quintal</Text>
           <Text style={styles.cardDesc}>
-            Enter purchase price per quintal. Payout breakdown recalculates live.
+            The farmer’s final amount updates as you change the price.
           </Text>
 
           <View style={styles.rateInputRow}>
@@ -208,7 +213,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
 
         {/* Net Settlement Breakdown */}
         <View style={styles.breakdownCard}>
-          <Text style={styles.breakdownTitle}>Settlement & Payout Breakdown</Text>
+          <Text style={styles.breakdownTitle}>Farmer payment details</Text>
 
           <View style={styles.breakdownRow}>
             <Text style={styles.breakdownLabel}>Gross Crop Value ({netQuintals} QTL × ₹{rateNumber})</Text>
@@ -218,14 +223,14 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>APMC User Fee (1.5% Mandi Cess)</Text>
+            <Text style={styles.breakdownLabel}>Mandi fee (1.5%)</Text>
             <Text style={styles.breakdownDeduct}>
               -₹{mandiFee.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
             </Text>
           </View>
 
           <View style={styles.breakdownRow}>
-            <Text style={styles.breakdownLabel}>Weighment & Labor Charge</Text>
+            <Text style={styles.breakdownLabel}>Weighing and labour</Text>
             <Text style={styles.breakdownDeduct}>-₹{weighmentFee.toFixed(2)}</Text>
           </View>
 
@@ -233,8 +238,8 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
 
           <View style={styles.netPayoutRow}>
             <View>
-              <Text style={styles.netPayoutTitle}>Net Farmer Payout</Text>
-              <Text style={styles.netPayoutSub}>Direct DBT Escrow Transfer</Text>
+              <Text style={styles.netPayoutTitle}>Farmer receives</Text>
+              <Text style={styles.netPayoutSub}>Sent after farmer accepts</Text>
             </View>
             <CurrencyDisplay
               amount={netPayout}
@@ -247,7 +252,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
 
         {/* Terms & Remark */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Offer Remarks & Terms</Text>
+          <Text style={styles.cardTitle}>Message to farmer</Text>
           <TextInput
             style={styles.textArea}
             multiline
@@ -258,7 +263,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
           <View style={styles.escrowNotice}>
             <ShieldCheck size={16} color={colors.primary} />
             <Text style={styles.escrowText}>
-              Escrow Protection: Funds will be held in Mandi Clearing Account and released once farmer confirms acceptance.
+              Payment is released only after the farmer accepts the offer.
             </Text>
           </View>
         </View>
@@ -266,7 +271,7 @@ export const BuyerOfferCreationScreen: React.FC<Props> = ({ route, navigation })
         {/* Action Button */}
         <View style={styles.actionContainer}>
           <PrimaryButton
-            title={`Issue Binding Offer of ₹${netPayout.toLocaleString('en-IN', {
+            title={`Send offer of ₹${netPayout.toLocaleString('en-IN', {
               maximumFractionDigits: 0,
             })}`}
             icon="receipt"

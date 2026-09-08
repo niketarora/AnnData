@@ -1,202 +1,251 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
-import { useAppStore } from '../../store';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppHeader } from '../../components/common/AppHeader';
-import { MetricCard } from '../../components/common/MetricCard';
-import { StatusChip } from '../../components/common/StatusChip';
-import { BuyerStackParamList } from '../../types';
+import { useAppStore } from '../../store';
+import { colors, radius, shadows, spacing, typography } from '../../theme';
+import type { BuyerStackParamList } from '../../types';
+
+type SummaryCardProps = {
+  label: string;
+  value: string;
+  detail: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+};
+
+const SummaryCard: React.FC<SummaryCardProps> = ({ label, value, detail, icon, color }) => (
+  <View style={styles.summaryCard}>
+    <View style={[styles.summaryIcon, { backgroundColor: `${color}14` }]}>
+      <Ionicons name={icon} size={24} color={color} />
+    </View>
+    <Text style={styles.summaryLabel}>{label}</Text>
+    <Text style={styles.summaryValue}>{value}</Text>
+    <Text style={styles.summaryDetail}>{detail}</Text>
+  </View>
+);
 
 export const BuyerDashboardScreen: React.FC = () => {
-  const [state, store] = useAppStore();
+  const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<BuyerStackParamList>>();
-
-  const buyer = state.buyer;
-  const activeLot = state.lots[0];
+  const { width } = useWindowDimensions();
+  const isWide = width >= 820;
+  const pendingPayments = state.transactions.filter((item) => item.paymentStatus !== 'PAID').length;
+  const nextLot = state.lots[0];
+  const activeDemand = state.demands.find((item) => item.status === 'ACTIVE') ?? state.demands[0];
 
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Mandi Control Centre"
-        subtitle={buyer.marketName}
+        title="Mandi operations"
+        subtitle={state.buyer.marketName}
         onNotificationPress={() => navigation.navigate('BuyerNotifications')}
         onProfilePress={() => navigation.navigate('BuyerProfile')}
       />
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Mandi Operator Header Card */}
-        <View style={styles.headerCard}>
-          <View style={styles.operatorRow}>
-            <View>
-              <Text style={styles.operatorGreeting}>Today's Procurement Terminal</Text>
-              <Text style={styles.terminalDetails}>
-                {buyer.marketName} • {buyer.counterId} • {buyer.mandiGate}
-              </Text>
-            </View>
-            <View style={styles.terminalStatusPill}>
-              <View style={styles.pulseDot} />
-              <Text style={styles.terminalStatusText}>TERMINAL ACTIVE</Text>
-            </View>
+        <View style={styles.shiftHeader}>
+          <View style={styles.shiftText}>
+            <Text style={styles.shiftGreeting}>Today at {state.buyer.mandiGate}</Text>
+            <Text style={styles.shiftLocation}>{state.buyer.counterId} • Live operations</Text>
+          </View>
+          <View style={styles.activeBadge}>
+            <View style={styles.activeDot} />
+            <Text style={styles.activeText}>ONLINE</Text>
           </View>
         </View>
 
-        {/* Primary Operational KPIs 2x2 + Big Total */}
-        <View style={styles.kpiGrid}>
-          <MetricCard
-            title="Today's Expected Lots"
-            value="124"
-            subtitle="37 Gate Arrivals cleared"
-            iconName="cube-outline"
-            style={{ width: '48%' }}
-          />
+        <View style={styles.alertCard}>
+          <View style={styles.alertIcon}>
+            <Ionicons
+              name={state.queue.delayMinutes > 0 ? 'warning' : 'checkmark-circle'}
+              size={30}
+              color={state.queue.delayMinutes > 0 ? colors.warningDark : colors.successDark}
+            />
+          </View>
+          <View style={styles.alertText}>
+            <Text style={styles.alertTitle}>
+              {state.queue.delayMinutes > 0
+                ? `Gate delayed by ${state.queue.delayMinutes} minutes`
+                : 'Gate running on time'}
+            </Text>
+            <Text style={styles.alertDescription}>
+              {state.queue.totalQueueLoad} lots are currently in the mandi queue.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.alertButton}
+            onPress={() => navigation.navigate('QueueControlPanel')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.alertButtonText}>Open queue</Text>
+          </TouchableOpacity>
+        </View>
 
-          <MetricCard
-            title="Active Queue Load"
-            value={`${state.queue.totalQueueLoad} Lots`}
-            subtitle={`Avg ${state.queue.avgLotClearMinutes}m clear time`}
-            iconName="speedometer-outline"
-            badgeText={state.queue.delayMinutes > 0 ? `+${state.queue.delayMinutes}m Delay` : 'Normal'}
-            badgeVariant={state.queue.delayMinutes > 0 ? 'warning' : 'success'}
-            style={{ width: '48%' }}
+        <View style={[styles.summaryGrid, isWide && styles.summaryGridWide]}>
+          <SummaryCard
+            label="Waiting for inspection"
+            value={`${state.lots.length}`}
+            detail="Farmer lots"
+            icon="search-circle"
+            color={colors.info}
           />
-
-          <MetricCard
-            title="Pending Inspection"
-            value="3 Lots"
-            subtitle="Bay #03 active"
-            iconName="flask-outline"
-            badgeText="Bay Active"
-            style={{ width: '48%' }}
+          <SummaryCard
+            label="In the queue"
+            value={`${state.queue.totalQueueLoad}`}
+            detail={`${state.queue.avgLotClearMinutes} min per lot`}
+            icon="time"
+            color={colors.warning}
           />
-
-          <MetricCard
-            title="Procurement Value"
-            value="₹16.42L"
-            subtitle="680 QTL procured today"
-            iconName="cash-outline"
-            badgeText="68% Quota"
-            highlightBandColor={colors.success}
-            style={{ width: '48%' }}
+          <SummaryCard
+            label="Payments to release"
+            value={`${pendingPayments}`}
+            detail="Requires action"
+            icon="wallet"
+            color={pendingPayments > 0 ? colors.danger : colors.success}
           />
         </View>
 
-        {/* Operational Quick Controls Strip */}
-        <View style={styles.quickControlsCard}>
-          <Text style={styles.sectionLabel}>QUEUE & INFLOW OPERATIONAL CONTROLS</Text>
-          <View style={styles.controlsRow}>
-            <TouchableOpacity
-              style={[styles.controlBtn, { backgroundColor: colors.warningTint }]}
-              onPress={() => store.addQueueDelay(20)}
-            >
-              <Ionicons name="time-outline" size={18} color={colors.warning} />
-              <Text style={[styles.controlBtnText, { color: colors.warningDark }]}>
-                Add +20m Gate Delay
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.controlBtn, { backgroundColor: colors.successTint }]}
-              onPress={() => store.clearQueueDelay()}
-            >
-              <Ionicons name="flash-outline" size={18} color={colors.success} />
-              <Text style={[styles.controlBtnText, { color: colors.successDark }]}>
-                Clear Delay (Leave Now)
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Currently Serving & Next In Line Banner */}
-        <View style={styles.queueBannerCard}>
-          <View style={styles.queueBannerHeader}>
-            <Text style={styles.sectionLabel}>LIVE GATE & WEIGHBRIDGE QUEUE</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('QueueControlPanel')}>
-              <Text style={styles.viewAllText}>Queue Control →</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.queueItemHighlight}>
-            <View style={styles.queueLeft}>
-              <View style={styles.tokenBox}>
-                <Text style={styles.tokenBoxLabel}>SERVING</Text>
-                <Text style={styles.tokenBoxNum}>#MKT-B-139</Text>
-              </View>
-              <View>
-                <Text style={styles.queueFarmerName}>Gurdeep Singh</Text>
-                <Text style={styles.queueCropDetails}>Paddy (Basmati 1121) • 35 QTL</Text>
-              </View>
-            </View>
-            <StatusChip label="ON WEIGHBRIDGE" variant="info" />
-          </View>
-
-          <View style={styles.queueItemNext}>
-            <View style={styles.queueLeft}>
-              <View style={[styles.tokenBox, { backgroundColor: colors.surfaceContainer }]}>
-                <Text style={styles.tokenBoxLabel}>NEXT</Text>
-                <Text style={styles.tokenBoxNum}>#MKT-B-142</Text>
-              </View>
-              <View>
-                <Text style={styles.queueFarmerName}>Rajesh Kumar</Text>
-                <Text style={styles.queueCropDetails}>Wheat (Sharbati) • 20 QTL</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.callNextBtn}
-              onPress={() => navigation.navigate('PhysicalInspectionStation', { bookingId: 'booking-b142' })}
-            >
-              <Text style={styles.callNextText}>Inspect Bay 3</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Incoming Farmer Lots Section */}
-        <View style={styles.incomingSection}>
-          <View style={styles.incomingHeader}>
-            <Text style={styles.sectionLabel}>INCOMING HARVEST LOTS</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('IncomingLots')}>
-              <Text style={styles.viewAllText}>View All ({state.lots.length}) →</Text>
-            </TouchableOpacity>
-          </View>
-
-          {state.lots.slice(0, 2).map((lot) => (
-            <TouchableOpacity
-              key={lot.id}
-              style={styles.lotItemCard}
-              onPress={() => navigation.navigate('BuyerLotDetails', { lotId: lot.id })}
-              activeOpacity={0.88}
-            >
-              <View style={styles.lotItemTop}>
+        <View style={[styles.workspace, isWide && styles.workspaceWide]}>
+          <View style={styles.primaryColumn}>
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
                 <View>
-                  <Text style={styles.lotItemFarmer}>{lot.farmerName}</Text>
-                  <Text style={styles.lotItemCommodity}>{lot.crop} ({lot.variety}) • {lot.quantityQuintals} Quintals</Text>
+                  <Text style={styles.eyebrow}>NEXT FARMER</Text>
+                  <Text style={styles.sectionTitle}>Ready for inspection</Text>
                 </View>
-                <StatusChip
-                  label={lot.status.replace('_', ' ')}
-                  variant={
-                    lot.status === 'GATE_CHECKED_IN'
-                      ? 'info'
-                      : lot.status === 'PAID'
-                      ? 'success'
-                      : 'warning'
-                  }
-                />
+                <View style={styles.tokenBadge}>
+                  <Text style={styles.tokenText}>#{state.queue.tokenNumber}</Text>
+                </View>
               </View>
 
-              <View style={styles.lotItemFooter}>
-                <Text style={styles.lotPreGrade}>
-                  AI Pre-Grade: <Text style={{ color: colors.success, fontWeight: '700' }}>Grade A</Text> (88/100)
-                </Text>
-                <Text style={styles.reviewActionText}>Review Lot Details →</Text>
+              <View style={styles.nextFarmerBody}>
+                <View style={styles.farmerAvatar}>
+                  <Ionicons name="person" size={28} color={colors.primary} />
+                </View>
+                <View style={styles.farmerDetails}>
+                  <Text style={styles.farmerName}>{nextLot?.farmerName}</Text>
+                  <Text style={styles.cropDetails}>
+                    {nextLot?.crop} ({nextLot?.variety}) • {nextLot?.quantityQuintals} quintals
+                  </Text>
+                  <Text style={styles.vehicleDetails}>{state.farmer.vehiclePlate} • Bay 3</Text>
+                </View>
               </View>
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={styles.secondaryAction}
+                  onPress={() => navigation.navigate('BuyerLotDetails', { lotId: nextLot.id })}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.secondaryActionText}>View lot</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.primaryAction}
+                  onPress={() => navigation.navigate('PhysicalInspectionStation', { bookingId: state.activeBookingId })}
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="clipboard-outline" size={21} color={colors.onPrimary} />
+                  <Text style={styles.primaryActionText}>Start inspection</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Incoming lots</Text>
+                <TouchableOpacity
+                  style={styles.textButton}
+                  onPress={() => navigation.navigate('IncomingLots')}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.textButtonText}>View all</Text>
+                  <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {state.lots.slice(0, 2).map((lot) => (
+                <TouchableOpacity
+                  key={lot.id}
+                  style={styles.lotRow}
+                  onPress={() => navigation.navigate('BuyerLotDetails', { lotId: lot.id })}
+                  accessibilityRole="button"
+                >
+                  <View style={styles.lotIcon}>
+                    <Ionicons name="leaf" size={22} color={colors.primary} />
+                  </View>
+                  <View style={styles.lotText}>
+                    <Text style={styles.lotTitle}>{lot.crop} • {lot.quantityQuintals} quintals</Text>
+                    <Text style={styles.lotSubtitle}>{lot.farmerName} • {lot.variety}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color={colors.textTertiary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.secondaryColumn}>
+            {activeDemand && (
+              <View style={styles.sectionCard}>
+                <Text style={styles.eyebrow}>ACTIVE BUYING TARGET</Text>
+                <Text style={styles.sectionTitle}>{activeDemand.crop} needed today</Text>
+                <Text style={styles.demandQuantity}>
+                  {activeDemand.requiredQuantityQuintals - activeDemand.fulfilledQuantityQuintals} quintals remaining
+                </Text>
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      {
+                        width: `${Math.min(
+                          100,
+                          (activeDemand.fulfilledQuantityQuintals / activeDemand.requiredQuantityQuintals) * 100,
+                        )}%`,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.demandPrice}>
+                  ₹{activeDemand.minPrice.toLocaleString('en-IN')}–₹{activeDemand.maxPrice.toLocaleString('en-IN')} per quintal
+                </Text>
+                <TouchableOpacity
+                  style={styles.fullWidthButton}
+                  onPress={() => navigation.navigate('DemandManagement')}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.fullWidthButtonText}>Manage buying targets</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={styles.paymentShortcut}
+              onPress={() => navigation.navigate('BuyerTransactions')}
+              accessibilityRole="button"
+            >
+              <View style={styles.paymentShortcutIcon}>
+                <Ionicons name="card" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.paymentShortcutText}>
+                <Text style={styles.paymentShortcutTitle}>Payments</Text>
+                <Text style={styles.paymentShortcutSub}>{pendingPayments} awaiting release</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color={colors.textTertiary} />
             </TouchableOpacity>
-          ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -211,209 +260,385 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  scrollContent: {
+  content: {
+    width: '100%',
+    maxWidth: 1180,
+    alignSelf: 'center',
     padding: spacing.gutterMobile,
-    gap: spacing.spaceMd,
-    paddingBottom: 60,
+    paddingBottom: 104,
+    gap: spacing.md,
   },
-  headerCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  operatorRow: {
+  shiftHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  operatorGreeting: {
-    ...typography.headlineMd,
+  shiftText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  shiftGreeting: {
+    ...typography.headlineXlMobile,
     color: colors.textPrimary,
+    fontSize: 24,
   },
-  terminalDetails: {
-    ...typography.caption,
+  shiftLocation: {
+    ...typography.bodyBase,
     color: colors.textSecondary,
+    fontSize: 15,
     marginTop: 2,
   },
-  terminalStatusPill: {
+  activeBadge: {
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.successTint,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
     borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    flexShrink: 0,
   },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.full,
     backgroundColor: colors.success,
   },
-  terminalStatusText: {
-    ...typography.badgeLabel,
-    color: colors.success,
+  activeText: {
+    ...typography.captionBold,
+    color: colors.successDark,
   },
-  kpiGrid: {
+  alertCard: {
+    minHeight: 84,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.spaceSm,
-  },
-  quickControlsCard: {
-    backgroundColor: colors.card,
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.warningTint,
     borderRadius: radius.xl,
-    padding: spacing.spaceMd,
     borderWidth: 1,
     borderColor: colors.border,
-    ...shadows.sm,
-    gap: spacing.spaceSm,
+    padding: spacing.md,
   },
-  sectionLabel: {
-    ...typography.badgeLabel,
+  alertIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.full,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  alertText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  alertTitle: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  alertDescription: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 15,
+    marginTop: 2,
+  },
+  alertButton: {
+    minHeight: 48,
+    justifyContent: 'center',
+    borderRadius: radius.lg,
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.md,
+    flexShrink: 0,
+  },
+  alertButtonText: {
+    ...typography.bodyBaseMedium,
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  summaryGrid: {
+    gap: spacing.sm,
+  },
+  summaryGridWide: {
+    flexDirection: 'row',
+  },
+  summaryCard: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 138,
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  summaryIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryLabel: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 15,
+    marginTop: spacing.sm,
+  },
+  summaryValue: {
+    ...typography.headlineXl,
+    color: colors.textPrimary,
+    fontSize: 30,
+    lineHeight: 36,
+  },
+  summaryDetail: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  workspace: {
+    gap: spacing.md,
+  },
+  workspaceWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  primaryColumn: {
+    flex: 1.45,
+    minWidth: 0,
+    gap: spacing.md,
+  },
+  secondaryColumn: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.md,
+  },
+  sectionCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  eyebrow: {
+    ...typography.captionBold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
   },
-  controlsRow: {
-    flexDirection: 'row',
-    gap: spacing.spaceSm,
+  sectionTitle: {
+    ...typography.headlineMd,
+    color: colors.textPrimary,
+    fontSize: 20,
   },
-  controlBtn: {
+  tokenBadge: {
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    flexShrink: 0,
+  },
+  tokenText: {
+    ...typography.bodyBaseMedium,
+    color: colors.primaryDark,
+    fontWeight: '700',
+  },
+  nextFarmerBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  farmerAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  farmerDetails: {
     flex: 1,
+    minWidth: 0,
+  },
+  farmerName: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  cropDetails: {
+    ...typography.bodyBase,
+    color: colors.textPrimary,
+    fontSize: 15,
+    marginTop: 2,
+  },
+  vehicleDetails: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  secondaryAction: {
+    minWidth: 120,
+    minHeight: 52,
+    flex: 1,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  secondaryActionText: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  primaryAction: {
+    minWidth: 180,
+    minHeight: 52,
+    flex: 1.4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    height: 44,
+    gap: spacing.xs,
     borderRadius: radius.lg,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.sm,
   },
-  controlBtnText: {
-    ...typography.captionBold,
-  },
-  queueBannerCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-    gap: spacing.spaceSm,
-  },
-  queueBannerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  viewAllText: {
-    ...typography.captionBold,
-    color: colors.primaryLight,
-  },
-  queueItemHighlight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: radius.lg,
-    padding: spacing.spaceSm,
-  },
-  queueItemNext: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.spaceSm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  queueLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  tokenBox: {
-    backgroundColor: colors.primaryTint,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.md,
-    alignItems: 'center',
-  },
-  tokenBoxLabel: {
-    ...typography.badgeLabel,
-    fontSize: 9,
-    color: colors.primaryDark,
-  },
-  tokenBoxNum: {
-    ...typography.captionBold,
-    color: colors.primaryDark,
-  },
-  queueFarmerName: {
-    ...typography.bodyBaseMedium,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  queueCropDetails: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  callNextBtn: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: radius.md,
-  },
-  callNextText: {
-    ...typography.captionBold,
+  primaryActionText: {
+    ...typography.bodyLg,
     color: colors.onPrimary,
+    fontWeight: '700',
   },
-  incomingSection: {
-    gap: spacing.spaceSm,
-  },
-  incomingHeader: {
+  textButton: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 4,
   },
-  lotItemCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-    gap: 6,
+  textButtonText: {
+    ...typography.bodyBaseMedium,
+    color: colors.primary,
+    fontSize: 15,
+    fontWeight: '700',
   },
-  lotItemTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  lotItemFarmer: {
-    ...typography.titleCard,
-    color: colors.textPrimary,
-  },
-  lotItemCommodity: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  lotItemFooter: {
+  lotRow: {
+    minHeight: 70,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: spacing.spaceXs,
+    gap: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.borderLight,
-    marginTop: 4,
   },
-  lotPreGrade: {
-    ...typography.caption,
+  lotIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  lotText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  lotTitle: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  lotSubtitle: {
+    ...typography.bodyBase,
     color: colors.textSecondary,
+    fontSize: 15,
+    marginTop: 2,
   },
-  reviewActionText: {
-    ...typography.captionBold,
-    color: colors.primaryLight,
+  demandQuantity: {
+    ...typography.headlineLg,
+    color: colors.primaryDark,
+    marginTop: spacing.md,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceContainer,
+    overflow: 'hidden',
+    marginTop: spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  demandPrice: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '600',
+    marginTop: spacing.sm,
+  },
+  fullWidthButton: {
+    minHeight: 52,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  fullWidthButtonText: {
+    ...typography.bodyLg,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  paymentShortcut: {
+    minHeight: 76,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: radius.xl,
+    backgroundColor: colors.card,
+    padding: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.sm,
+  },
+  paymentShortcutIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  paymentShortcutText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  paymentShortcutTitle: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  paymentShortcutSub: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 15,
   },
 });

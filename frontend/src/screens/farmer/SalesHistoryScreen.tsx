@@ -9,7 +9,11 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { StatusChip } from '../../components/common/StatusChip';
 import { FarmerStackParamList } from '../../types';
 
-export const SalesHistoryScreen: React.FC = () => {
+interface SalesHistoryScreenProps {
+  showBack?: boolean;
+}
+
+export const SalesHistoryScreen: React.FC<SalesHistoryScreenProps> = ({ showBack = true }) => {
   const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
   const [filter, setFilter] = useState<'ALL' | 'PAID' | 'PENDING'>('ALL');
@@ -19,14 +23,17 @@ export const SalesHistoryScreen: React.FC = () => {
     if (filter === 'PENDING') return t.paymentStatus !== 'PAID';
     return true;
   });
+  const paidTransactions = state.transactions.filter((item) => item.paymentStatus === 'PAID');
+  const totalPaid = paidTransactions.reduce((sum, item) => sum + item.netAmount, 0);
+  const totalPaidQuantity = paidTransactions.reduce((sum, item) => sum + item.quantityQuintals, 0);
 
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Sales & Payments Ledger"
-        subtitle="Audited APMC Transactions"
-        showBack
-        onBack={() => navigation.goBack()}
+        title="Payments"
+        subtitle="Money sent to your bank"
+        showBack={showBack}
+        onBack={showBack ? () => navigation.goBack() : undefined}
         onNotificationPress={() => navigation.navigate('Notifications')}
         onProfilePress={() => navigation.navigate('FarmerProfile')}
       />
@@ -38,13 +45,15 @@ export const SalesHistoryScreen: React.FC = () => {
       >
         {/* Settlement Total Card */}
         <View style={styles.heroLedgerCard}>
-          <Text style={styles.heroLabel}>TOTAL SETTLED THIS SEASON</Text>
-          <Text style={styles.heroAmount}>₹1,60,754.50</Text>
+          <Text style={styles.heroLabel}>Total money received this season</Text>
+          <Text style={styles.heroAmount}>₹{totalPaid.toLocaleString('en-IN')}</Text>
           <View style={styles.heroSubRow}>
-            <Text style={styles.heroSubText}>3 Transactions • 59.7 Quintals</Text>
+            <Text style={styles.heroSubText}>
+              {paidTransactions.length} payments • {totalPaidQuantity.toLocaleString('en-IN')} quintals
+            </Text>
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-done" size={13} color={colors.success} />
-              <Text style={styles.verifiedText}>All Bank Credited</Text>
+              <Text style={styles.verifiedText}>Received in bank</Text>
             </View>
           </View>
         </View>
@@ -63,7 +72,7 @@ export const SalesHistoryScreen: React.FC = () => {
                   filter === tab && styles.filterChipTextActive,
                 ]}
               >
-                {tab === 'ALL' ? 'All Transactions' : tab === 'PAID' ? 'Settled (Paid)' : 'Pending Clearance'}
+                {tab === 'ALL' ? 'All' : tab === 'PAID' ? 'Received' : 'Pending'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -84,7 +93,7 @@ export const SalesHistoryScreen: React.FC = () => {
                   <Text style={styles.txnDate}>{txn.createdAt}</Text>
                 </View>
                 <StatusChip
-                  label={txn.paymentStatus === 'PAID' ? 'PAID & SETTLED' : 'PROCESSING'}
+                  label={txn.paymentStatus === 'PAID' ? 'MONEY RECEIVED' : 'PAYMENT PENDING'}
                   variant={txn.paymentStatus === 'PAID' ? 'success' : 'warning'}
                 />
               </View>
@@ -93,12 +102,12 @@ export const SalesHistoryScreen: React.FC = () => {
 
               <View style={styles.txnBodyRow}>
                 <View>
-                  <Text style={styles.colLabel}>Buyer & Market</Text>
+                  <Text style={styles.colLabel}>Buyer</Text>
                   <Text style={styles.colValue}>{txn.buyerName}</Text>
                   <Text style={styles.colSub}>Taraori APMC Mandi</Text>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={styles.colLabel}>Net Payout Amount</Text>
+                  <Text style={styles.colLabel}>You receive</Text>
                   <Text style={styles.netAmountText}>
                     ₹{txn.netAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </Text>
@@ -112,7 +121,7 @@ export const SalesHistoryScreen: React.FC = () => {
                   <Text style={styles.refText}>{txn.bankReference}</Text>
                 </View>
                 <View style={styles.viewReceiptRow}>
-                  <Text style={styles.viewReceiptText}>View J-Form</Text>
+                  <Text style={styles.viewReceiptText}>View receipt</Text>
                   <Ionicons name="chevron-forward" size={15} color={colors.primaryLight} />
                 </View>
               </View>

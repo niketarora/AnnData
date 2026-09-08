@@ -9,10 +9,10 @@ export type RootStackParamList = {
 
 export type FarmerTabParamList = {
   FarmerHomeTab: undefined;
-  FarmerMarketsTab: undefined;
   FarmerSellTab: undefined;
-  FarmerBookingsTab: undefined;
-  FarmerProfileTab: undefined;
+  FarmerTokenTab: undefined;
+  FarmerPaymentsTab: undefined;
+  FarmerHelpTab: undefined;
 };
 
 export type FarmerStackParamList = {

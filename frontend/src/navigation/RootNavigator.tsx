@@ -4,7 +4,6 @@ import { NavigationContainer, createNavigationContainerRef } from '@react-naviga
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
 import { useAppStore } from '../store';
-import { DemoToolbar } from '../components/demo/DemoToolbar';
 
 // Screens & Navigators
 import { WelcomeScreen } from '../screens/auth/WelcomeScreen';
@@ -49,9 +48,6 @@ export const RootNavigator: React.FC = () => {
           <Stack.Screen name="BuyerRoot" component={BuyerNavigator} />
         </Stack.Navigator>
       </NavigationContainer>
-
-      {/* Persistent floating demo control bar for reviewer evaluation */}
-      <DemoToolbar />
     </View>
   );
 };

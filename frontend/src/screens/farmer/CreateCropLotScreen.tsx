@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -18,14 +19,19 @@ import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { FarmerStackParamList, CropType } from '../../types';
 import { cropService } from '../../services';
 
-export const CreateCropLotScreen: React.FC = () => {
+interface CreateCropLotScreenProps {
+  showBack?: boolean;
+}
+
+export const CreateCropLotScreen: React.FC<CreateCropLotScreenProps> = ({ showBack = true }) => {
   const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
 
   const [crop, setCrop] = useState<CropType>('Wheat');
   const [variety, setVariety] = useState('Sharbati');
   const [quantity, setQuantity] = useState(20);
-  const [harvestDate] = useState('Today, 08 Sep 2026');
+  const [harvestDate, setHarvestDate] = useState('08 Sep 2026');
+  const [farmLocation, setFarmLocation] = useState(state.farmer.location);
   const [loading, setLoading] = useState(false);
 
   const samplePhotos = [
@@ -44,8 +50,8 @@ export const CreateCropLotScreen: React.FC = () => {
         crop,
         variety,
         quantityQuintals: quantity,
-        harvestDate: '2026-09-08',
-        farmLocation: state.farmer.location,
+        harvestDate,
+        farmLocation,
         images: samplePhotos,
       });
 
@@ -53,16 +59,17 @@ export const CreateCropLotScreen: React.FC = () => {
       navigation.navigate('CropQualityResult', { lotId: newLot.id });
     } catch (err) {
       setLoading(false);
+      Alert.alert('Could not save crop', 'Please check your connection and try again.');
     }
   };
 
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Sell / Register Crop"
-        subtitle="Step 1 of 3 • Lot Specifications"
-        showBack
-        onBack={() => navigation.goBack()}
+        title="Sell your crop"
+        subtitle="Step 1 of 3 • Crop details"
+        showBack={showBack}
+        onBack={showBack ? () => navigation.goBack() : undefined}
         onNotificationPress={() => navigation.navigate('Notifications')}
         onProfilePress={() => navigation.navigate('FarmerProfile')}
       />
@@ -74,7 +81,7 @@ export const CreateCropLotScreen: React.FC = () => {
       >
         {/* Crop Selection */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionLabel}>SELECT COMMODITY</Text>
+          <Text style={styles.sectionLabel}>Choose your crop</Text>
           <View style={styles.cropsRow}>
             {(['Wheat', 'Paddy', 'Tomato', 'Mustard', 'Maize', 'Cotton'] as CropType[]).map((item) => (
               <TouchableOpacity
@@ -97,9 +104,9 @@ export const CreateCropLotScreen: React.FC = () => {
 
         {/* Variety & Harvest Details */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionLabel}>VARIETY & HARVEST SPECS</Text>
+          <Text style={styles.sectionLabel}>Crop details</Text>
           <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>Seed Variety</Text>
+            <Text style={styles.fieldLabel}>Variety</Text>
             <TextInput
               style={styles.textInput}
               value={variety}
@@ -111,7 +118,7 @@ export const CreateCropLotScreen: React.FC = () => {
 
           {/* Stepper for Quantity */}
           <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>Harvest Quantity (Quintals)</Text>
+            <Text style={styles.fieldLabel}>Quantity in quintals</Text>
             <View style={styles.stepperContainer}>
               <TouchableOpacity
                 style={styles.stepperBtn}
@@ -120,7 +127,17 @@ export const CreateCropLotScreen: React.FC = () => {
                 <Ionicons name="remove" size={24} color={colors.textPrimary} />
               </TouchableOpacity>
               <View style={styles.stepperValueContainer}>
-                <Text style={styles.stepperValueText}>{quantity}</Text>
+                <TextInput
+                  style={styles.quantityInput}
+                  value={String(quantity)}
+                  onChangeText={(value) => {
+                    const nextQuantity = Number(value.replace(/[^0-9]/g, ''));
+                    setQuantity(Number.isFinite(nextQuantity) ? nextQuantity : 0);
+                  }}
+                  keyboardType="number-pad"
+                  selectTextOnFocus
+                  accessibilityLabel="Quantity in quintals"
+                />
                 <Text style={styles.stepperUnitText}>Quintals (~{quantity * 100} kg)</Text>
               </View>
               <TouchableOpacity
@@ -132,29 +149,39 @@ export const CreateCropLotScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={styles.metaRow}>
-            <View>
-              <Text style={styles.fieldLabel}>Harvested</Text>
-              <Text style={styles.metaValue}>{harvestDate}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.fieldLabel}>Farm Origin</Text>
-              <Text style={styles.metaValue}>Karnal Mandi Region</Text>
-            </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.fieldLabel}>Harvest date</Text>
+            <TextInput
+              style={styles.textInput}
+              value={harvestDate}
+              onChangeText={setHarvestDate}
+              placeholder="e.g. 08 Sep 2026"
+              placeholderTextColor={colors.textSecondary}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.fieldLabel}>Farm or village</Text>
+            <TextInput
+              style={styles.textInput}
+              value={farmLocation}
+              onChangeText={setFarmLocation}
+              placeholder="Enter your village"
+              placeholderTextColor={colors.textSecondary}
+            />
           </View>
         </View>
 
         {/* Photo Upload & AI Quality Camera Scanner UI */}
         <View style={styles.sectionCard}>
           <View style={styles.photoHeaderRow}>
-            <Text style={styles.sectionLabel}>GRAIN QUALITY IMAGERY (4 SAMPLES)</Text>
+            <Text style={styles.sectionLabel}>Take 4 clear crop photos</Text>
             <View style={styles.aiBadge}>
               <Ionicons name="camera-reverse" size={13} color={colors.success} />
-              <Text style={styles.aiBadgeText}>AI Ready</Text>
+              <Text style={styles.aiBadgeText}>Photos ready</Text>
             </View>
           </View>
           <Text style={styles.photoInstructions}>
-            Upload or capture 4 well-lit photos under daylight on a clean tray for instant AI grading.
+            Spread the crop on a clean tray and take photos in daylight. Avoid shadows and blur.
           </Text>
 
           <View style={styles.photoGrid}>
@@ -177,7 +204,7 @@ export const CreateCropLotScreen: React.FC = () => {
 
         {/* Action Button */}
         <PrimaryButton
-          title={loading ? 'Scanning Grain with AI...' : 'Analyze Quality & Generate Valuation'}
+          title={loading ? 'Checking crop photos...' : 'Check crop quality'}
           loading={loading}
           iconName="scan-outline"
           onPress={handleCreateLot}
@@ -277,26 +304,18 @@ const styles = StyleSheet.create({
   stepperValueContainer: {
     alignItems: 'center',
   },
-  stepperValueText: {
+  quantityInput: {
+    minWidth: 80,
+    paddingHorizontal: spacing.spaceXs,
+    paddingVertical: 2,
     ...typography.headlineLg,
     color: colors.textPrimary,
     fontWeight: '700',
+    textAlign: 'center',
   },
   stepperUnitText: {
     ...typography.caption,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.spaceXs,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-  },
-  metaValue: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
     marginTop: 2,
   },
   photoHeaderRow: {

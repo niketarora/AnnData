@@ -9,17 +9,9 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Phone,
-  KeyRound,
-  ShieldCheck,
-  CheckCircle2,
-  Sparkles,
-} from 'lucide-react-native';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
-import { SecondaryButton } from '../../components/common/SecondaryButton';
 import { mockStore } from '../../store/mockStore';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../types/navigation';
@@ -35,13 +27,13 @@ export const LoginOTPScreen: React.FC<Props> = ({ route, navigation }) => {
   const [otpCode, setOtpCode] = useState('123456');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFillDemoOTP = () => {
-    setOtpCode('123456');
-  };
-
   const handleVerify = () => {
-    if (otpCode !== '123456' && otpCode.length !== 6) {
-      Alert.alert('Invalid OTP', 'Please enter a 6-digit OTP code (Demo OTP: 123456).');
+    if (phoneNumber.length !== 10) {
+      Alert.alert('Check mobile number', 'Please enter a 10-digit mobile number.');
+      return;
+    }
+    if (otpCode.length !== 6) {
+      Alert.alert('Check verification code', 'Please enter the 6-digit code sent by SMS.');
       return;
     }
 
@@ -60,8 +52,8 @@ export const LoginOTPScreen: React.FC<Props> = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Mobile Verification"
-        subtitle={`Signing in to ${role === 'FARMER' ? 'Kisan Portal' : 'Mandi Buyer Portal'}`}
+        title="Phone verification"
+        subtitle="Secure sign in"
         showBack
         onBack={() => navigation.goBack()}
       />
@@ -71,9 +63,9 @@ export const LoginOTPScreen: React.FC<Props> = ({ route, navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.card}>
-          <Text style={styles.title}>Enter Phone Number</Text>
+          <Text style={styles.title}>Enter your mobile number</Text>
           <Text style={styles.subtitle}>
-            A 6-digit verification code will be sent to your registered APMC mobile number.
+            We will send a 6-digit code by SMS.
           </Text>
 
           <View style={styles.phoneInputRow}>
@@ -93,10 +85,7 @@ export const LoginOTPScreen: React.FC<Props> = ({ route, navigation }) => {
           {/* OTP Section */}
           <View style={styles.otpSection}>
             <View style={styles.otpHeaderRow}>
-              <Text style={styles.otpTitle}>Enter 6-Digit OTP</Text>
-              <TouchableOpacity onPress={handleFillDemoOTP}>
-                <Text style={styles.demoOtpHint}>Use Demo OTP: 123456</Text>
-              </TouchableOpacity>
+              <Text style={styles.otpTitle}>Enter the 6-digit code</Text>
             </View>
 
             <TextInput
@@ -110,39 +99,21 @@ export const LoginOTPScreen: React.FC<Props> = ({ route, navigation }) => {
 
             <View style={styles.resendRow}>
               <Text style={styles.resendTimer}>Resend OTP in 24s</Text>
-              <TouchableOpacity onPress={() => Alert.alert('OTP Sent', 'New demo OTP code 123456 dispatched.')}>
+              <TouchableOpacity onPress={() => Alert.alert('Code sent', 'A new verification code was sent by SMS.')}>
                 <Text style={styles.resendLink}>Resend SMS</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        {/* Quick Demo Info Box */}
-        <View style={styles.infoBox}>
-          <ShieldCheck size={18} color={colors.primary} />
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>APMC e-NAM Identity Protection</Text>
-            <Text style={styles.infoDesc}>
-              Test accounts are pre-configured with active mandi licenses and bank accounts for seamless end-to-end evaluation.
-            </Text>
-          </View>
-        </View>
-
         {/* Buttons */}
         <View style={styles.actionBox}>
           <PrimaryButton
-            title="Verify & Enter Dashboard"
+            title="Continue"
             icon="chevron"
             loading={isLoading}
             onPress={handleVerify}
           />
-
-          <View style={styles.onboardingRow}>
-            <SecondaryButton
-              title="First Time? Run Farmer Onboarding"
-              onPress={() => navigation.navigate('FarmerOnboarding')}
-            />
-          </View>
         </View>
       </ScrollView>
     </View>

@@ -31,8 +31,8 @@ export const IncomingLotsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Incoming Farmer Lots"
-        subtitle="Mandi Gate Log & Intake Queue"
+        title="Lots"
+        subtitle="Arrivals and inspection"
         onNotificationPress={() => navigation.navigate('BuyerNotifications')}
         onProfilePress={() => navigation.navigate('BuyerProfile')}
       />
@@ -49,7 +49,7 @@ export const IncomingLotsScreen: React.FC = () => {
             style={styles.searchInput}
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by farmer, crop, or lot ID..."
+            placeholder="Search farmer, crop, or lot number"
             placeholderTextColor={colors.textSecondary}
           />
         </View>
@@ -69,12 +69,12 @@ export const IncomingLotsScreen: React.FC = () => {
                 ]}
               >
                 {f === 'ALL'
-                  ? 'All Incoming'
+                  ? 'All'
                   : f === 'ARRIVED'
-                  ? 'Gate In / Arrived'
+                  ? 'Arrived'
                   : f === 'INSPECTION'
-                  ? 'Inspection & Weighing'
-                  : 'Settled'}
+                  ? 'In progress'
+                  : 'Completed'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -106,18 +106,18 @@ export const IncomingLotsScreen: React.FC = () => {
                     />
                   </View>
                   <Text style={styles.commodityText}>
-                    {lot.crop} ({lot.variety}) • {lot.quantityQuintals} Quintals
+                    {lot.crop} ({lot.variety}) • {lot.quantityQuintals} quintals
                   </Text>
                   <Text style={styles.lotMeta}>
-                    Token #MKT-B-142 • Assigned Gate 2 Express
+                    Token #MKT-B-142 • Gate 2
                   </Text>
                 </View>
               </View>
 
               <View style={styles.lotFooter}>
                 <View style={styles.preGradeRow}>
-                  <Text style={styles.preGradeLabel}>AI Grade:</Text>
-                  <Text style={styles.preGradeValue}>Grade A (88/100, 11.8% moisture)</Text>
+                  <Text style={styles.preGradeLabel}>Photo check:</Text>
+                  <Text style={styles.preGradeValue}>Grade A • 11.8% moisture</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.primaryLight} />
               </View>

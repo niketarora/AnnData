@@ -11,7 +11,6 @@ interface AppHeaderProps {
   onBack?: () => void;
   onNotificationPress?: () => void;
   onProfilePress?: () => void;
-  showRoleToggle?: boolean;
   rightAction?: {
     icon?: string;
     onPress: () => void;
@@ -25,17 +24,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onBack,
   onNotificationPress,
   onProfilePress,
-  showRoleToggle = true,
   rightAction,
 }) => {
-  const [state, store] = useAppStore();
+  const [state] = useAppStore();
   const unreadNotifs = state.notifications.filter(
     (n) => !n.read && (n.recipientRole === state.currentRole || n.recipientRole === 'ALL')
   ).length;
-
-  const toggleRole = () => {
-    store.setRole(state.currentRole === 'FARMER' ? 'BUYER' : 'FARMER');
-  };
 
   return (
     <View style={styles.container}>
@@ -55,11 +49,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <View style={styles.logoBadge}>
               <Ionicons name="leaf" size={20} color={colors.primaryLight} />
             </View>
-            <View>
+            <View style={styles.brandTextContainer}>
               <Text style={styles.logoText}>AgriMandi</Text>
               <View style={styles.locationRow}>
                 <Ionicons name="location-sharp" size={12} color={colors.primaryLight} />
-                <Text style={styles.locationText}>
+                <Text style={styles.locationText} numberOfLines={1}>
                   {state.currentRole === 'FARMER' ? state.farmer.mandiRegion : state.buyer.marketName}
                 </Text>
               </View>
@@ -82,32 +76,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </View>
 
       <View style={styles.rightContainer}>
-        {showRoleToggle && (
-          <TouchableOpacity
-            style={[
-              styles.roleBadge,
-              state.currentRole === 'FARMER' ? styles.roleBadgeFarmer : styles.roleBadgeBuyer,
-            ]}
-            onPress={toggleRole}
-            activeOpacity={0.8}
-            accessibilityLabel={`Current role is ${state.currentRole}. Tap to switch.`}
-          >
-            <Ionicons
-              name={state.currentRole === 'FARMER' ? 'person' : 'business'}
-              size={13}
-              color={state.currentRole === 'FARMER' ? colors.primaryLight : colors.info}
-            />
-            <Text
-              style={[
-                styles.roleBadgeText,
-                { color: state.currentRole === 'FARMER' ? colors.primaryLight : colors.info },
-              ]}
-            >
-              {state.currentRole === 'FARMER' ? 'KISAN' : 'BUYER'}
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {rightAction && (
           <TouchableOpacity
             style={styles.iconButton}
@@ -118,34 +86,38 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={onNotificationPress}
-          activeOpacity={0.7}
-          accessibilityLabel="Notifications"
-          accessibilityRole="button"
-        >
-          <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
-          {unreadNotifs > 0 && <View style={styles.notificationDot} />}
-        </TouchableOpacity>
+        {onNotificationPress && (
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={onNotificationPress}
+            activeOpacity={0.7}
+            accessibilityLabel="Notifications"
+            accessibilityRole="button"
+          >
+            <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
+            {unreadNotifs > 0 && <View style={styles.notificationDot} />}
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity
-          style={styles.avatarButton}
-          onPress={onProfilePress}
-          activeOpacity={0.7}
-          accessibilityLabel="User Profile"
-          accessibilityRole="button"
-        >
-          <Image
-            source={{
-              uri:
-                state.currentRole === 'FARMER'
-                  ? state.farmer.avatarUrl
-                  : state.buyer.avatarUrl,
-            }}
-            style={styles.avatarImage as any}
-          />
-        </TouchableOpacity>
+        {onProfilePress && (
+          <TouchableOpacity
+            style={styles.avatarButton}
+            onPress={onProfilePress}
+            activeOpacity={0.7}
+            accessibilityLabel="User profile"
+            accessibilityRole="button"
+          >
+            <Image
+              source={{
+                uri:
+                  state.currentRole === 'FARMER'
+                    ? state.farmer.avatarUrl
+                    : state.buyer.avatarUrl,
+              }}
+              style={styles.avatarImage as any}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -153,7 +125,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    height: 64,
+    minHeight: 68,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -166,12 +138,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
     gap: spacing.spaceXs,
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.spaceXs,
+    flex: 1,
+    minWidth: 0,
+  },
+  brandTextContainer: {
+    flex: 1,
+    minWidth: 0,
   },
   logoBadge: {
     width: 36,
@@ -195,11 +174,13 @@ const styles = StyleSheet.create({
   locationText: {
     ...typography.caption,
     color: colors.textSecondary,
-    fontSize: 11,
+    fontSize: 12,
+    flexShrink: 1,
   },
   titleContainer: {
     marginLeft: spacing.spaceXs,
     flex: 1,
+    minWidth: 0,
   },
   headerTitle: {
     ...typography.headlineMd,
@@ -212,32 +193,12 @@ const styles = StyleSheet.create({
   rightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.spaceXs,
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-    borderWidth: 1,
-  },
-  roleBadgeFarmer: {
-    backgroundColor: colors.primaryTint,
-    borderColor: colors.primaryLight,
-  },
-  roleBadgeBuyer: {
-    backgroundColor: colors.infoTint,
-    borderColor: colors.info,
-  },
-  roleBadgeText: {
-    ...typography.badgeLabel,
-    fontSize: 10,
+    gap: 2,
+    flexShrink: 0,
   },
   iconButton: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -255,8 +216,8 @@ const styles = StyleSheet.create({
     borderColor: colors.card,
   },
   avatarButton: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: radius.full,
     overflow: 'hidden',
     borderWidth: 1.5,

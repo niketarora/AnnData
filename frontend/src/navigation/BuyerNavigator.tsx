@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -8,9 +8,8 @@ import {
   Inbox,
   Sliders,
   Receipt,
-  User,
 } from 'lucide-react-native';
-import { colors, typography, spacing } from '../theme';
+import { colors, typography } from '../theme';
 import type { BuyerTabParamList, BuyerStackParamList } from '../types/navigation';
 
 // Buyer Screens
@@ -31,6 +30,8 @@ import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 const Tab = createBottomTabNavigator<BuyerTabParamList>();
 const Stack = createNativeStackNavigator<BuyerStackParamList>();
 
+const BuyerQueueTabScreen = () => <QueueControlPanelScreen showBack={false} />;
+
 const BuyerTabs: React.FC = () => {
   return (
     <Tab.Navigator
@@ -42,21 +43,25 @@ const BuyerTabs: React.FC = () => {
           backgroundColor: colors.surface,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: Platform.OS === 'ios' ? 92 : 72,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontFamily: typography.fontFamilies.medium,
         },
+        tabBarItemStyle: {
+          minWidth: 0,
+        },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen
         name="BuyerDashboardTab"
         component={BuyerDashboardScreen}
         options={{
-          tabBarLabel: 'Dashboard',
+          tabBarLabel: 'Operations',
           tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
@@ -64,7 +69,7 @@ const BuyerTabs: React.FC = () => {
         name="BuyerDemandTab"
         component={DemandManagementScreen}
         options={{
-          tabBarLabel: 'Demands',
+          tabBarLabel: 'Buying',
           tabBarIcon: ({ color, size }) => <ShoppingBag size={size} color={color} />,
         }}
       />
@@ -72,15 +77,15 @@ const BuyerTabs: React.FC = () => {
         name="BuyerIncomingLotsTab"
         component={IncomingLotsScreen}
         options={{
-          tabBarLabel: 'Incoming',
+          tabBarLabel: 'Lots',
           tabBarIcon: ({ color, size }) => <Inbox size={size} color={color} />,
         }}
       />
       <Tab.Screen
         name="BuyerQueueTab"
-        component={QueueControlPanelScreen}
+        component={BuyerQueueTabScreen}
         options={{
-          tabBarLabel: 'Queue Control',
+          tabBarLabel: 'Queue',
           tabBarIcon: ({ color, size }) => <Sliders size={size} color={color} />,
         }}
       />
@@ -88,7 +93,7 @@ const BuyerTabs: React.FC = () => {
         name="BuyerTransactionsTab"
         component={BuyerTransactionsScreen}
         options={{
-          tabBarLabel: 'Settlements',
+          tabBarLabel: 'Payments',
           tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
         }}
       />

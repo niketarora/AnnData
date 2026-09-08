@@ -1,29 +1,75 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
-import { useAppStore } from '../../store';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppHeader } from '../../components/common/AppHeader';
-import { RecommendationCard } from '../../components/decision/RecommendationCard';
-import { CurrencyDisplay } from '../../components/common/CurrencyDisplay';
-import { FarmerStackParamList } from '../../types';
+import { getFarmerCopy } from '../../i18n/farmerCopy';
+import { useAppStore } from '../../store';
+import { colors, radius, shadows, spacing, typography } from '../../theme';
+import type { FarmerStackParamList } from '../../types';
+
+type HomeAction = {
+  title: string;
+  description: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  backgroundColor: string;
+  iconColor: string;
+  onPress: () => void;
+};
 
 export const FarmerHomeScreen: React.FC = () => {
-  const [state, store] = useAppStore();
+  const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
+  const copy = getFarmerCopy(state.language);
+  const booking = state.bookings[0];
+  const transaction = state.transactions.find((item) => item.id === state.activeTransactionId)
+    ?? state.transactions[0];
 
-  const activeLot = state.lots.find((l) => l.id === state.activeLotId) || state.lots[0];
-  const recommendedMarket = state.markets.find((m) => m.isRecommended) || state.markets[0];
-  const activeBooking = state.bookings[0];
+  const isLeaveNow = state.queue.departureState === 'LEAVE_NOW';
+  const isArrived = state.queue.departureState === 'ARRIVED';
+  const statusTitle = isArrived ? copy.goToGate : isLeaveNow ? copy.leaveNow : copy.waitAtHome;
+  const statusMessage = isArrived
+    ? copy.arrivedMessage
+    : isLeaveNow
+      ? copy.leaveMessage
+      : copy.waitMessage(state.queue.delayMinutes, state.queue.revisedDepartureTime);
+  const statusColor = isLeaveNow || isArrived ? colors.successDark : colors.warningDark;
+  const statusBackground = isLeaveNow || isArrived ? colors.successTint : colors.warningTint;
+  const statusIcon: keyof typeof Ionicons.glyphMap = isArrived
+    ? 'location'
+    : isLeaveNow
+      ? 'navigate'
+      : 'home';
+
+  const actions: HomeAction[] = [
+    {
+      title: copy.sellCrop,
+      description: copy.sellCropHelp,
+      icon: 'basket',
+      backgroundColor: colors.successTint,
+      iconColor: colors.successDark,
+      onPress: () => navigation.navigate('CreateCropLot'),
+    },
+    {
+      title: copy.findMandi,
+      description: copy.findMandiHelp,
+      icon: 'storefront',
+      backgroundColor: colors.infoTint,
+      iconColor: colors.infoDark,
+      onPress: () => navigation.navigate('BestPlacesToSell'),
+    },
+    {
+      title: copy.myToken,
+      description: copy.tokenHelp,
+      icon: 'ticket',
+      backgroundColor: colors.warningTint,
+      iconColor: colors.warningDark,
+      onPress: () => navigation.navigate('LiveMandiQueue', { bookingId: booking?.id }),
+    },
+  ];
+
+  const paymentReceived = transaction?.paymentStatus === 'PAID';
 
   return (
     <View style={styles.container}>
@@ -34,304 +80,99 @@ export const FarmerHomeScreen: React.FC = () => {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Header Banner */}
-        <View style={styles.welcomeBanner}>
-          <View style={styles.welcomeLeft}>
-            <View style={styles.greetingRow}>
-              <Text style={styles.greetingText}>Good Morning, {state.farmer.name.split(' ')[0]}</Text>
-              <Text style={styles.waveEmoji}>👋</Text>
-            </View>
-            <View style={styles.regionRow}>
-              <Ionicons name="location-sharp" size={14} color={colors.primaryLight} />
-              <Text style={styles.regionText}>{state.farmer.mandiRegion}</Text>
-            </View>
-          </View>
-
-          <View style={styles.liveSyncPill}>
-            <View style={styles.liveSyncDot} />
-            <Text style={styles.liveSyncText}>Live Sync active</Text>
+        <View style={styles.greetingBlock}>
+          <Text style={styles.greeting}>
+            {copy.hello}, {state.farmer.name.split(' ')[0]}
+          </Text>
+          <View style={styles.locationRow}>
+            <Ionicons name="location" size={18} color={colors.primary} />
+            <Text style={styles.location}>{state.farmer.mandiRegion}</Text>
           </View>
         </View>
 
-        {/* Today's Booking Urgency Alert Card */}
-        {activeBooking && (
-          <View style={styles.urgencyCard}>
-            <View style={styles.urgencyHeader}>
-              <View style={styles.urgencyTitleRow}>
-                <Ionicons name="time-outline" size={20} color={colors.warning} />
-                <Text style={styles.urgencyTitle}>Today's Booking Status</Text>
+        {booking && (
+          <View style={[styles.statusCard, { backgroundColor: statusBackground }]}>
+            <View style={styles.statusTopRow}>
+              <View style={[styles.statusIcon, { backgroundColor: colors.card }]}>
+                <Ionicons name={statusIcon} size={28} color={statusColor} />
               </View>
-              <View style={styles.tokenTag}>
-                <Text style={styles.tokenTagText}>Token #{activeBooking.tokenNumber}</Text>
+              <View style={styles.statusMeta}>
+                <Text style={styles.updatedText}>{copy.updatedNow}</Text>
+                <Text style={styles.tokenNumber}>#{booking.tokenNumber}</Text>
               </View>
             </View>
 
-            {/* Status Alert Banner */}
-            <View
-              style={[
-                styles.alertBanner,
-                state.queue.departureState === 'LEAVE_NOW'
-                  ? styles.alertBannerSuccess
-                  : styles.alertBannerWarning,
-              ]}
+            <Text style={[styles.statusTitle, { color: statusColor }]}>{statusTitle}</Text>
+            <Text style={styles.statusMessage}>{statusMessage}</Text>
+
+            <TouchableOpacity
+              style={styles.statusButton}
+              onPress={() => navigation.navigate('LiveMandiQueue', { bookingId: booking.id })}
+              accessibilityRole="button"
+              accessibilityLabel={copy.viewToken}
             >
+              <Ionicons name="ticket-outline" size={22} color={colors.onPrimary} />
+              <Text style={styles.statusButtonText}>{copy.viewToken}</Text>
+              <Ionicons name="chevron-forward" size={22} color={colors.onPrimary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={styles.actionsSection}>
+          <Text style={styles.sectionTitle}>{copy.mainActions}</Text>
+          <View style={styles.actionList}>
+            {actions.map((action) => (
+              <TouchableOpacity
+                key={action.title}
+                style={styles.actionCard}
+                onPress={action.onPress}
+                accessibilityRole="button"
+                accessibilityLabel={`${action.title}. ${action.description}`}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: action.backgroundColor }]}>
+                  <Ionicons name={action.icon} size={26} color={action.iconColor} />
+                </View>
+                <View style={styles.actionText}>
+                  <Text style={styles.actionTitle}>{action.title}</Text>
+                  <Text style={styles.actionDescription}>{action.description}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {transaction && (
+          <View style={styles.paymentCard}>
+            <View style={styles.paymentIcon}>
               <Ionicons
-                name={
-                  state.queue.departureState === 'LEAVE_NOW'
-                    ? 'checkmark-circle'
-                    : 'warning'
-                }
-                size={20}
-                color={
-                  state.queue.departureState === 'LEAVE_NOW'
-                    ? colors.success
-                    : colors.warning
-                }
-                style={styles.alertIcon}
+                name={paymentReceived ? 'checkmark-circle' : 'time'}
+                size={28}
+                color={paymentReceived ? colors.success : colors.warning}
               />
-              <View style={styles.alertTextContainer}>
-                <View style={styles.alertTagRow}>
-                  <Text
-                    style={[
-                      styles.alertBadgeText,
-                      {
-                        color:
-                          state.queue.departureState === 'LEAVE_NOW'
-                            ? colors.success
-                            : colors.warning,
-                      },
-                    ]}
-                  >
-                    {state.queue.departureState === 'LEAVE_NOW' ? 'LEAVE NOW' : 'WAIT'}
-                  </Text>
-                  <Text style={styles.alertDot}>•</Text>
-                  <Text
-                    style={[
-                      styles.alertDetailText,
-                      {
-                        color:
-                          state.queue.departureState === 'LEAVE_NOW'
-                            ? colors.success
-                            : colors.warning,
-                      },
-                    ]}
-                  >
-                    {state.queue.departureState === 'LEAVE_NOW'
-                      ? 'Gate Express Line open'
-                      : `${state.queue.delayMinutes} min delay at gate`}
-                  </Text>
-                </View>
-                <Text style={styles.alertMessage}>
-                  {state.queue.departureState === 'LEAVE_NOW'
-                    ? 'Mandi gate congestion cleared. Proceed to Taraori Mandi Gate 2.'
-                    : `Mandi unloading queue is delayed by ~${state.queue.delayMinutes} min. Do not leave your farm yet. Next departure ETA: ${state.queue.revisedDepartureTime}.`}
-                </Text>
-              </View>
             </View>
-
-            {/* Token Details Strip */}
-            <View style={styles.tokenStrip}>
-              <View style={styles.stripCol}>
-                <Text style={styles.stripLabel}>Scheduled Slot</Text>
-                <Text style={styles.stripValue}>{activeBooking.scheduledSlot}</Text>
-              </View>
-              <View style={[styles.stripCol, { alignItems: 'flex-end' }]}>
-                <Text style={styles.stripLabel}>Destination</Text>
-                <Text style={styles.stripValue}>{activeBooking.marketName.split(' ')[0]} Mandi</Text>
-              </View>
+            <View style={styles.paymentContent}>
+              <Text style={styles.paymentLabel}>
+                {paymentReceived ? copy.moneyReceived : copy.paymentPending}
+              </Text>
+              <Text style={styles.paymentAmount}>
+                ₹{transaction.netAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </Text>
+              <Text style={styles.bankText}>{copy.bankMessage}</Text>
+              <TouchableOpacity
+                style={styles.paymentLink}
+                onPress={() => navigation.navigate('PaymentStatus', { transactionId: transaction.id })}
+                accessibilityRole="button"
+              >
+                <Text style={styles.paymentLinkText}>{copy.viewPayments}</Text>
+                <Ionicons name="arrow-forward" size={20} color={colors.primary} />
+              </TouchableOpacity>
             </View>
-
-            {/* Live Queue Button */}
-            <TouchableOpacity
-              style={styles.queueButton}
-              onPress={() => navigation.navigate('LiveMandiQueue', { bookingId: activeBooking.id })}
-              activeOpacity={0.85}
-            >
-              <Ionicons name="speedometer-outline" size={19} color={colors.primaryLight} />
-              <Text style={styles.queueButtonText}>View Live Mandi Queue</Text>
-            </TouchableOpacity>
           </View>
         )}
-
-        {/* Selling Recommendation Card */}
-        <RecommendationCard
-          market={recommendedMarket}
-          onBookPress={() => navigation.navigate('BookSlot', { marketId: recommendedMarket.id })}
-          onViewDetailsPress={() => navigation.navigate('BestPlacesToSell')}
-        />
-
-        {/* Active Crop Lot Card */}
-        {activeLot && (
-          <View style={styles.cropLotCard}>
-            <View style={styles.cropCardHeader}>
-              <Text style={styles.cropCardSub}>ACTIVE HARVEST LOT</Text>
-              <Text style={styles.lotIdText}>Lot #{activeLot.id.toUpperCase()}</Text>
-            </View>
-
-            <View style={styles.cropInfoRow}>
-              <Image source={{ uri: activeLot.images[0] }} style={styles.cropThumbnail} />
-              <View style={styles.cropDetailsCol}>
-                <View style={styles.cropTitleRow}>
-                  <Text style={styles.cropName}>{activeLot.crop} ({activeLot.variety})</Text>
-                  <Text style={styles.cropQuantity}>{activeLot.quantityQuintals} QTL</Text>
-                </View>
-
-                {activeLot.qualityAssessment && (
-                  <View style={styles.gradeRow}>
-                    <View style={styles.gradeBadge}>
-                      <Text style={styles.gradeBadgeText}>
-                        AI {activeLot.qualityAssessment.predictedGrade}
-                      </Text>
-                    </View>
-                    <Text style={styles.confidenceText}>
-                      Score: {activeLot.qualityAssessment.overallScore}/100 ({activeLot.qualityAssessment.confidenceScore}% conf.)
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Estimated Value */}
-            <View style={styles.estValueRow}>
-              <View>
-                <Text style={styles.estValueLabel}>Estimated Market Value</Text>
-                <Text style={styles.estValueNumber}>₹48,400 – ₹50,400</Text>
-              </View>
-              <View style={styles.trendBadge}>
-                <Ionicons name="trending-up" size={15} color={colors.success} />
-                <Text style={styles.trendText}>Firm +2.4%</Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.cropDetailsButton}
-              onPress={() => navigation.navigate('CropQualityResult', { lotId: activeLot.id })}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="document-text-outline" size={18} color={colors.textSecondary} />
-              <Text style={styles.cropDetailsButtonText}>View AI Quality Analysis</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Quick Actions 2x2 Grid */}
-        <View style={styles.quickActionsContainer}>
-          <View style={styles.quickActionsHeader}>
-            <Text style={styles.quickActionsTitle}>QUICK ACTIONS</Text>
-            <Text style={styles.quickActionsSub}>Frequent tasks</Text>
-          </View>
-
-          <View style={styles.grid2x2}>
-            {/* Quick Action 1: Sell / Scan Crop */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              onPress={() => navigation.navigate('CreateCropLot')}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.gridIconCircle, { backgroundColor: colors.successTint }]}>
-                <Ionicons name="camera" size={20} color={colors.success} />
-              </View>
-              <Text style={styles.gridItemTitle}>Sell / Scan Crop</Text>
-              <Text style={styles.gridItemSub}>Instant AI grade</Text>
-            </TouchableOpacity>
-
-            {/* Quick Action 2: Best Markets */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              onPress={() => navigation.navigate('BestPlacesToSell')}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.gridIconCircle, { backgroundColor: colors.infoTint }]}>
-                <Ionicons name="bar-chart" size={20} color={colors.info} />
-              </View>
-              <Text style={styles.gridItemTitle}>Best Markets</Text>
-              <Text style={styles.gridItemSub}>Compare live rates</Text>
-            </TouchableOpacity>
-
-            {/* Quick Action 3: Active Bookings */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              onPress={() => navigation.navigate('LiveMandiQueue', {})}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.gridIconCircle, { backgroundColor: colors.warningTint }]}>
-                <Ionicons name="ticket" size={20} color={colors.warning} />
-              </View>
-              <Text style={styles.gridItemTitle}>Active Bookings</Text>
-              <Text style={styles.gridItemSub}>1 Slot active</Text>
-            </TouchableOpacity>
-
-            {/* Quick Action 4: Sales & Payments */}
-            <TouchableOpacity
-              style={styles.gridItem}
-              onPress={() => navigation.navigate('SalesHistory')}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.gridIconCircle, { backgroundColor: colors.surfaceContainerHigh }]}>
-                <Ionicons name="wallet" size={20} color={colors.primaryLight} />
-              </View>
-              <Text style={styles.gridItemTitle}>Sales & Payments</Text>
-              <Text style={styles.gridItemSub}>Direct bank credit</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Financial Summary Card */}
-        <View style={styles.financialCard}>
-          <View style={styles.financialHeader}>
-            <View style={styles.financialTitleRow}>
-              <Ionicons name="wallet-outline" size={18} color={colors.primaryLight} />
-              <Text style={styles.financialHeaderTitle}>THIS MONTH (OCT 2026)</Text>
-            </View>
-            <View style={styles.onTrackBadge}>
-              <Text style={styles.onTrackText}>On Track</Text>
-            </View>
-          </View>
-
-          <View style={styles.settledVolumeContainer}>
-            <Text style={styles.settledLabel}>Total Settled Volume</Text>
-            <CurrencyDisplay amount={124500} size="lg" color={colors.textPrimary} />
-          </View>
-
-          {/* Split Ledgers */}
-          <View style={styles.ledgersRow}>
-            <View style={[styles.ledgerCol, { backgroundColor: colors.successTint }]}>
-              <View style={styles.ledgerStatusRow}>
-                <Ionicons name="checkmark-circle" size={15} color={colors.success} />
-                <Text style={[styles.ledgerStatusText, { color: colors.success }]}>PAID</Text>
-              </View>
-              <Text style={[styles.ledgerAmount, { color: colors.success }]}>₹1,12,100</Text>
-              <Text style={styles.ledgerNote}>Credited to SBI Bank</Text>
-            </View>
-
-            <View style={[styles.ledgerCol, { backgroundColor: colors.warningTint }]}>
-              <View style={styles.ledgerStatusRow}>
-                <Ionicons name="hourglass" size={15} color={colors.warning} />
-                <Text style={[styles.ledgerStatusText, { color: colors.warning }]}>PENDING</Text>
-              </View>
-              <Text style={[styles.ledgerAmount, { color: colors.warning }]}>₹12,400</Text>
-              <Text style={styles.ledgerNote}>Mandi gate clearance</Text>
-            </View>
-          </View>
-
-          {/* Progress Bar */}
-          <View style={styles.progressBar}>
-            <View style={[styles.progressPaid, { width: '90%' }]} />
-            <View style={[styles.progressPending, { width: '10%' }]} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.viewHistoryButton}
-            onPress={() => navigation.navigate('SalesHistory')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.viewHistoryText}>View Complete Sales History</Text>
-            <Ionicons name="arrow-forward" size={18} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </View>
   );
@@ -345,430 +186,196 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
-  scrollContent: {
+  content: {
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
     padding: spacing.gutterMobile,
-    gap: spacing.spaceMd,
-    paddingBottom: 100,
+    paddingBottom: 104,
+    gap: spacing.lg,
   },
-  welcomeBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  welcomeLeft: {
-    flex: 1,
-  },
-  greetingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  greetingBlock: {
+    minWidth: 0,
     gap: 4,
   },
-  greetingText: {
+  greeting: {
     ...typography.headlineXlMobile,
     color: colors.textPrimary,
+    fontSize: 24,
+    lineHeight: 32,
   },
-  waveEmoji: {
-    fontSize: 20,
-  },
-  regionRow: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
   },
-  regionText: {
-    ...typography.bodyBaseMedium,
+  location: {
+    ...typography.bodyLg,
     color: colors.textSecondary,
+    flexShrink: 1,
   },
-  liveSyncPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.successTint,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-  },
-  liveSyncDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.success,
-  },
-  liveSyncText: {
-    ...typography.captionBold,
-    color: colors.success,
-  },
-  urgencyCard: {
-    backgroundColor: colors.card,
+  statusCard: {
     borderRadius: radius.xl,
-    padding: spacing.spaceMd,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.sm,
   },
-  urgencyHeader: {
+  statusTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  urgencyTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  urgencyTitle: {
-    ...typography.titleCard,
-    color: colors.textPrimary,
-  },
-  tokenTag: {
-    backgroundColor: colors.surfaceContainer,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  statusIcon: {
+    width: 52,
+    height: 52,
     borderRadius: radius.full,
-  },
-  tokenTagText: {
-    ...typography.captionBold,
-    color: colors.textSecondary,
-  },
-  alertBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: spacing.spaceSm,
-    borderRadius: radius.lg,
-    marginTop: spacing.spaceSm,
-    gap: 10,
-  },
-  alertBannerWarning: {
-    backgroundColor: colors.warningTint,
-  },
-  alertBannerSuccess: {
-    backgroundColor: colors.successTint,
-  },
-  alertIcon: {
-    marginTop: 2,
-  },
-  alertTextContainer: {
-    flex: 1,
-  },
-  alertTagRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
-  alertBadgeText: {
-    ...typography.captionBold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  statusMeta: {
+    minWidth: 0,
+    alignItems: 'flex-end',
+    flexShrink: 1,
   },
-  alertDot: {
+  updatedText: {
+    ...typography.bodyBase,
     color: colors.textSecondary,
+    fontSize: 15,
   },
-  alertDetailText: {
-    ...typography.captionBold,
-  },
-  alertMessage: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  tokenStrip: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.spaceSm,
-    paddingVertical: 8,
-    marginTop: spacing.spaceSm,
-  },
-  stripCol: {},
-  stripLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  stripValue: {
+  tokenNumber: {
     ...typography.bodyBaseMedium,
     color: colors.textPrimary,
     marginTop: 2,
+    flexShrink: 1,
   },
-  queueButton: {
+  statusTitle: {
+    ...typography.headlineXl,
+    fontSize: 30,
+    lineHeight: 38,
+    marginTop: spacing.md,
+  },
+  statusMessage: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontSize: 17,
+    lineHeight: 26,
+    marginTop: spacing.xs,
+  },
+  statusButton: {
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: colors.surfaceContainer,
+    gap: spacing.xs,
     borderRadius: radius.lg,
-    height: 44,
-    marginTop: spacing.spaceSm,
+    backgroundColor: colors.primary,
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
-  queueButtonText: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
+  statusButtonText: {
+    ...typography.bodyLg,
+    color: colors.onPrimary,
+    fontWeight: '700',
+    flexShrink: 1,
   },
-  cropLotCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
+  actionsSection: {
+    gap: spacing.sm,
   },
-  cropCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: spacing.spaceXs,
-  },
-  cropCardSub: {
-    ...typography.captionBold,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  lotIdText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  cropInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.spaceSm,
-    marginTop: spacing.spaceXs,
-  },
-  cropThumbnail: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceContainerHigh,
-  },
-  cropDetailsCol: {
-    flex: 1,
-  },
-  cropTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  cropName: {
+  sectionTitle: {
     ...typography.headlineMd,
     color: colors.textPrimary,
+    fontSize: 20,
   },
-  cropQuantity: {
-    ...typography.titleCard,
-    color: colors.textPrimary,
+  actionList: {
+    gap: spacing.sm,
   },
-  gradeRow: {
+  actionCard: {
+    minHeight: 76,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  gradeBadge: {
-    backgroundColor: colors.successTint,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  gradeBadgeText: {
-    ...typography.badgeLabel,
-    color: colors.success,
-  },
-  confidenceText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  estValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: radius.lg,
-    padding: spacing.spaceSm,
-    marginTop: spacing.spaceMd,
-  },
-  estValueLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  estValueNumber: {
-    ...typography.titleCard,
-    color: colors.primaryLight,
-    marginTop: 2,
-  },
-  trendBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  trendText: {
-    ...typography.captionBold,
-    color: colors.success,
-  },
-  cropDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radius.lg,
-    height: 44,
-    marginTop: spacing.spaceSm,
-  },
-  cropDetailsButtonText: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
-  },
-  quickActionsContainer: {
-    gap: spacing.spaceXs,
-  },
-  quickActionsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 2,
-  },
-  quickActionsTitle: {
-    ...typography.captionBold,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  quickActionsSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  grid2x2: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.spaceSm,
-  },
-  gridItem: {
-    width: '48%',
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: spacing.spaceSm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-  },
-  gridIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.spaceXs,
-  },
-  gridItemTitle: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
-  },
-  gridItemSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  financialCard: {
+    gap: spacing.sm,
     backgroundColor: colors.card,
     borderRadius: radius.xl,
-    padding: spacing.spaceMd,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+    ...shadows.sm,
+  },
+  actionIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  actionText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  actionTitle: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  actionDescription: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 21,
+    marginTop: 2,
+  },
+  paymentCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
     ...shadows.sm,
   },
-  financialHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  financialTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  financialHeaderTitle: {
-    ...typography.captionBold,
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  onTrackBadge: {
-    backgroundColor: colors.successTint,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  paymentIcon: {
+    width: 48,
+    height: 48,
     borderRadius: radius.full,
-  },
-  onTrackText: {
-    ...typography.captionBold,
-    color: colors.success,
-  },
-  settledVolumeContainer: {
-    marginVertical: spacing.spaceSm,
-  },
-  settledLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  ledgersRow: {
-    flexDirection: 'row',
-    gap: spacing.spaceSm,
-    marginTop: spacing.spaceXs,
-  },
-  ledgerCol: {
-    flex: 1,
-    padding: spacing.spaceSm,
-    borderRadius: radius.lg,
-  },
-  ledgerStatusRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceContainerLow,
+    flexShrink: 0,
   },
-  ledgerStatusText: {
-    ...typography.captionBold,
+  paymentContent: {
+    flex: 1,
+    minWidth: 0,
   },
-  ledgerAmount: {
-    ...typography.titleCard,
-    marginTop: 4,
+  paymentLabel: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
-  ledgerNote: {
-    ...typography.caption,
-    color: colors.textSecondary,
+  paymentAmount: {
+    ...typography.currencyDisplayMobile,
+    color: colors.primaryDark,
     marginTop: 2,
   },
-  progressBar: {
-    flexDirection: 'row',
-    height: 6,
-    borderRadius: radius.full,
-    backgroundColor: colors.surfaceContainer,
-    overflow: 'hidden',
-    marginTop: spacing.spaceMd,
+  bankText: {
+    ...typography.bodyBase,
+    color: colors.textSecondary,
+    fontSize: 15,
   },
-  progressPaid: {
-    height: '100%',
-    backgroundColor: colors.success,
-  },
-  progressPending: {
-    height: '100%',
-    backgroundColor: colors.warning,
-  },
-  viewHistoryButton: {
+  paymentLink: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radius.lg,
-    height: 44,
-    paddingHorizontal: spacing.spaceMd,
-    marginTop: spacing.spaceMd,
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
   },
-  viewHistoryText: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
+  paymentLinkText: {
+    ...typography.bodyLg,
+    color: colors.primary,
+    fontWeight: '700',
   },
 });

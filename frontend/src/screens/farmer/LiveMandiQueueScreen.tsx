@@ -19,7 +19,11 @@ import { StepProgressBar } from '../../components/queue/StepProgressBar';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { FarmerStackParamList } from '../../types';
 
-export const LiveMandiQueueScreen: React.FC = () => {
+interface LiveMandiQueueScreenProps {
+  showBack?: boolean;
+}
+
+export const LiveMandiQueueScreen: React.FC<LiveMandiQueueScreenProps> = ({ showBack = true }) => {
   const [state, store] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
   const [checkInModalVisible, setCheckInModalVisible] = useState(false);
@@ -42,9 +46,9 @@ export const LiveMandiQueueScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Live Queue & Gate Pass"
-        showBack
-        onBack={() => navigation.goBack()}
+        title="My token"
+        showBack={showBack}
+        onBack={showBack ? () => navigation.goBack() : undefined}
         onNotificationPress={() => navigation.navigate('Notifications')}
         onProfilePress={() => navigation.navigate('FarmerProfile')}
       />
@@ -58,9 +62,9 @@ export const LiveMandiQueueScreen: React.FC = () => {
         <View style={styles.headerContext}>
           <View style={styles.liveSyncBadge}>
             <View style={styles.livePulseDot} />
-            <Text style={styles.liveSyncBadgeText}>LIVE MANDI LINK ACTIVE</Text>
+            <Text style={styles.liveSyncBadgeText}>LIVE UPDATE</Text>
           </View>
-          <Text style={styles.pageTitle}>Live Queue & Gate Pass</Text>
+          <Text style={styles.pageTitle}>Your mandi token</Text>
           <Text style={styles.mandiTokenSub}>
             Taraori Mandi (Market B) • Token #{state.queue.tokenNumber}
           </Text>
@@ -72,35 +76,33 @@ export const LiveMandiQueueScreen: React.FC = () => {
           delayMinutes={state.queue.delayMinutes}
           revisedDepartureTime={state.queue.revisedDepartureTime}
           gateNotice={state.queue.gateNotice.message}
-          onStateChange={(newState) => store.setDepartureState(newState)}
-          showSimulator={true}
         />
 
         {/* Live Queue Velocity Visualizer Card */}
         <View style={styles.velocityCard}>
           <View style={styles.slotDetailsRow}>
             <View>
-              <Text style={styles.slotLabel}>Your Assigned Slot</Text>
+              <Text style={styles.slotLabel}>Your time</Text>
               <Text style={styles.lotName}>Lot #B-142 • Sharbati Wheat</Text>
               <Text style={styles.vehicleText}>20 Quintals • Tractor HR-05-AB</Text>
             </View>
             <View style={styles.positionRight}>
-              <Text style={styles.positionLabel}>Position in Line</Text>
+              <Text style={styles.positionLabel}>Your queue</Text>
               <Text style={styles.lotsAheadNumber}>
                 {state.queue.lotsAhead > 0 ? `${state.queue.lotsAhead} Lots Ahead` : 'Now Serving!'}
               </Text>
-              <Text style={styles.totalLoadText}>{state.queue.totalQueueLoad} total queue load</Text>
+              <Text style={styles.totalLoadText}>{state.queue.totalQueueLoad} lots in total</Text>
             </View>
           </View>
 
           {/* Metric Sub-strip */}
           <View style={styles.metricSubStrip}>
             <View style={styles.metricSubCol}>
-              <Text style={styles.subColLabel}>Estimated Weighment</Text>
+              <Text style={styles.subColLabel}>Expected weighing time</Text>
               <Text style={styles.subColValue}>{state.queue.estimatedWeighmentTime}</Text>
             </View>
             <View style={styles.metricSubCol}>
-              <Text style={styles.subColLabel}>Avg Lot Clear Time</Text>
+              <Text style={styles.subColLabel}>Time per vehicle</Text>
               <Text style={styles.subColValue}>{state.queue.avgLotClearMinutes} mins</Text>
             </View>
           </View>
@@ -139,8 +141,8 @@ export const LiveMandiQueueScreen: React.FC = () => {
                 ]}
               >
                 {!isLeaveNow && !isArrived
-                  ? 'Start Navigation (Locked: Wait at Farm)'
-                  : 'Start Live GPS Navigation to Gate 2'}
+                  ? 'Navigation opens when it is time to leave'
+                  : 'Start directions to Gate 2'}
               </Text>
             </TouchableOpacity>
 
@@ -151,7 +153,7 @@ export const LiveMandiQueueScreen: React.FC = () => {
               activeOpacity={0.85}
             >
               <Ionicons name="qr-code-outline" size={18} color={colors.primaryLight} />
-              <Text style={styles.checkInButtonText}>I Have Arrived • Scan Gate Pass</Text>
+              <Text style={styles.checkInButtonText}>I have arrived at Gate 2</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -160,7 +162,7 @@ export const LiveMandiQueueScreen: React.FC = () => {
               activeOpacity={0.8}
             >
               <Ionicons name="call-outline" size={18} color={colors.primaryLight} />
-              <Text style={styles.callOperatorText}>Call Mandi Gate Operator (Counter 4)</Text>
+              <Text style={styles.callOperatorText}>Call the mandi gate</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -179,15 +181,15 @@ export const LiveMandiQueueScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Mandi Gate Arrival Cam & Logistics Preview */}
+        {/* Offline availability */}
         <View style={styles.cameraFeedCard}>
           <View style={styles.cameraHeader}>
-            <View style={styles.cameraLiveDot} />
-            <Text style={styles.cameraTitle}>Gate 2 Express Live Camera Feed</Text>
+            <Ionicons name="cloud-offline-outline" size={22} color={colors.primary} />
+            <Text style={styles.cameraTitle}>Token works without internet</Text>
           </View>
           <View style={styles.cameraPlaceholder}>
-            <Ionicons name="videocam-outline" size={36} color={colors.textSecondary} />
-            <Text style={styles.cameraFeedStatus}>Inflow Lane Clear • Active Scale #2 Ready</Text>
+            <Ionicons name="qr-code-outline" size={36} color={colors.textSecondary} />
+            <Text style={styles.cameraFeedStatus}>Keep this screen open or take a screenshot before leaving.</Text>
           </View>
         </View>
       </ScrollView>

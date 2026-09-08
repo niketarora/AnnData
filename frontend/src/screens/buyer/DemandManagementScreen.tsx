@@ -16,8 +16,8 @@ export const DemandManagementScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Procurement Demands"
-        subtitle="Active Mandi Quotas & Targets"
+        title="Buying targets"
+        subtitle="What your mandi needs"
         onNotificationPress={() => navigation.navigate('BuyerNotifications')}
         onProfilePress={() => navigation.navigate('BuyerProfile')}
       />
@@ -29,10 +29,10 @@ export const DemandManagementScreen: React.FC = () => {
       >
         {/* Total Quota Header */}
         <View style={styles.quotaHeaderCard}>
-          <Text style={styles.quotaHeaderLabel}>TOTAL ACTIVE BUYING QUOTA</Text>
+          <Text style={styles.quotaHeaderLabel}>TOTAL NEEDED TODAY</Text>
           <Text style={styles.quotaHeaderValue}>700 Quintals</Text>
           <Text style={styles.quotaHeaderSub}>
-            425 QTL Fulfilled (61%) • Daily Processing Limit: 1,500 QTL
+            425 quintals received • 61% complete
           </Text>
         </View>
 
@@ -51,7 +51,7 @@ export const DemandManagementScreen: React.FC = () => {
                       {dem.crop} ({dem.variety})
                     </Text>
                     <Text style={styles.minGradeText}>
-                      Min. Quality: <Text style={{ color: colors.success }}>{dem.minimumGrade}</Text>
+                      Minimum quality: <Text style={{ color: colors.success }}>{dem.minimumGrade}</Text>
                     </Text>
                   </View>
                   <View style={styles.statusPill}>
@@ -62,11 +62,11 @@ export const DemandManagementScreen: React.FC = () => {
                 {/* Target & Price Strip */}
                 <View style={styles.targetPriceRow}>
                   <View>
-                    <Text style={styles.colLabel}>Target Required</Text>
+                    <Text style={styles.colLabel}>Quantity needed</Text>
                     <Text style={styles.colValue}>{dem.requiredQuantityQuintals} Quintals</Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.colLabel}>Target Price Window</Text>
+                    <Text style={styles.colLabel}>Buying price</Text>
                     <Text style={[styles.colValue, { color: colors.primaryDark }]}>
                       ₹{dem.minPrice} – ₹{dem.maxPrice} / QTL
                     </Text>
@@ -76,7 +76,7 @@ export const DemandManagementScreen: React.FC = () => {
                 {/* Fulfillment Progress */}
                 <View style={styles.progressSection}>
                   <View style={styles.progressLabelRow}>
-                    <Text style={styles.progressLabel}>Fulfilled: {dem.fulfilledQuantityQuintals} QTL</Text>
+                    <Text style={styles.progressLabel}>Received: {dem.fulfilledQuantityQuintals} quintals</Text>
                     <Text style={styles.progressPercent}>{percent}%</Text>
                   </View>
                   <View style={styles.progressBarTrack}>
@@ -96,7 +96,7 @@ export const DemandManagementScreen: React.FC = () => {
 
         {/* Action to create new demand */}
         <PrimaryButton
-          title="Create New Procurement Demand"
+          title="Add buying target"
           iconName="add-circle-outline"
           onPress={() => navigation.navigate('CreateDemand')}
         />

@@ -41,29 +41,30 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
   const activeOffer = state.offers[state.activeBookingId];
   const lot = state.lots.find((l) => l.id === state.activeLotId);
   const activeTxn = state.transactions.find((t) => t.bookingId === state.activeBookingId);
+  const totalPaid = state.transactions
+    .filter((item) => item.paymentStatus === 'PAID')
+    .reduce((sum, item) => sum + item.netAmount, 0);
+  const paidCount = state.transactions.filter((item) => item.paymentStatus === 'PAID').length;
 
   const handleReleasePayment = (txnId: string) => {
-    setProcessingTxnId(txnId);
-    setTimeout(() => {
-      mockStore.releasePayment();
-      setProcessingTxnId(null);
-      Alert.alert(
-        'Payment Successfully Released!',
-        '₹48,654.50 has been transferred via DBT directly into Rajesh Kumar\'s account. J-Form tax invoice generated.',
-        [
-          {
-            text: 'Switch to Farmer View (Check Receipt)',
-            onPress: () => {
-              mockStore.setRole('FARMER');
-            },
+    Alert.alert(
+      'Release ₹48,654.50?',
+      'This will mark the payment as sent to Rajesh Kumar’s bank account ending in 8492.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Release payment',
+          onPress: () => {
+            setProcessingTxnId(txnId);
+            setTimeout(() => {
+              mockStore.releasePayment();
+              setProcessingTxnId(null);
+              Alert.alert('Payment sent', '₹48,654.50 was sent to Rajesh Kumar. The receipt is ready.');
+            }, 600);
           },
-          {
-            text: 'OK',
-            style: 'cancel',
-          },
-        ]
-      );
-    }, 600);
+        },
+      ],
+    );
   };
 
   const filteredTransactions = state.transactions.filter((item) => {
@@ -77,8 +78,8 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Procurement Settlements"
-        subtitle={`${state.buyer.firmName || state.buyer.organizationName} • Escrow Ready`}
+        title="Payments"
+        subtitle={state.buyer.firmName || state.buyer.organizationName}
       />
 
       <ScrollView
@@ -88,15 +89,15 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
         {/* Metric Summary Cards */}
         <View style={styles.summaryGrid}>
           <MetricCard
-            title="Total Procured"
-            value="₹32.84L"
-            subtext="14 Lots settled this month"
+            title="Payments completed"
+            value={`₹${totalPaid.toLocaleString('en-IN')}`}
+            subtext={`${paidCount} payments sent`}
             icon="wallet"
           />
           <MetricCard
-            title="Escrow Balance"
+            title="Available balance"
             value="₹4.50L"
-            subtext="Pre-funded HDFC Mandi A/c"
+            subtext="HDFC mandi account"
             icon="shield"
           />
         </View>
@@ -135,7 +136,7 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
           <View style={styles.activeCard}>
             <View style={styles.activeHeader}>
               <View>
-                <Text style={styles.activeTag}>CURRENT ACTIVE LOT #WH-098</Text>
+                <Text style={styles.activeTag}>CURRENT LOT #WH-098</Text>
                 <Text style={styles.lotName}>{lot.variety} {lot.crop}</Text>
                 <Text style={styles.farmerName}>Seller: {lot.farmerName} • Token #MKT-B-142</Text>
               </View>
@@ -153,15 +154,15 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
 
             <View style={styles.activeDetails}>
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Net Quantity</Text>
+                <Text style={styles.detailLabel}>Final quantity</Text>
                 <Text style={styles.detailVal}>{activeOffer.netQuintals || activeOffer.quantityQuintals} Quintals</Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Bid Rate</Text>
+                <Text style={styles.detailLabel}>Your rate</Text>
                 <Text style={styles.detailVal}>₹{activeOffer.offeredPricePerQuintal || activeOffer.ratePerQuintal} / QTL</Text>
               </View>
               <View style={styles.detailItem}>
-                <Text style={styles.detailLabel}>Net Payout</Text>
+                <Text style={styles.detailLabel}>Farmer receives</Text>
                 <CurrencyDisplay
                   amount={activeOffer.netPayout}
                   size="md"
@@ -177,11 +178,11 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
                 <View style={styles.releaseNotice}>
                   <ShieldCheck size={16} color={colors.primary} />
                   <Text style={styles.releaseNoticeText}>
-                    Farmer accepted terms. Ready to disburse funds from Mandi Escrow.
+                    The farmer accepted. Check the amount before releasing payment.
                   </Text>
                 </View>
                 <PrimaryButton
-                  title="Release Payment via DBT (₹48,654.50)"
+                  title="Release ₹48,654.50"
                   icon="wallet"
                   loading={processingTxnId === activeTxn?.id}
                   onPress={() => handleReleasePayment(activeTxn?.id || 'txn-28491')}
@@ -193,14 +194,8 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
               <View style={styles.waitingNotice}>
                 <Clock size={16} color={colors.accentOrange} />
                 <Text style={styles.waitingText}>
-                  Offer submitted. Waiting for Farmer to review and accept on their device.
+                  Offer sent. Waiting for the farmer to accept or ask for a better price.
                 </Text>
-                <TouchableOpacity
-                  style={styles.switchRoleHint}
-                  onPress={() => mockStore.setRole('FARMER')}
-                >
-                  <Text style={styles.switchRoleText}>Switch to Farmer Screen to Accept →</Text>
-                </TouchableOpacity>
               </View>
             )}
 
@@ -208,7 +203,7 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
               <View style={styles.paidSuccessBox}>
                 <CheckCircle2 size={18} color={colors.success} />
                 <Text style={styles.paidSuccessText}>
-                  Funds Credited via Direct DBT. APMC J-Form Generated.
+                  Payment sent to the farmer. Receipt generated.
                 </Text>
               </View>
             )}
@@ -216,7 +211,7 @@ export const BuyerTransactionsScreen: React.FC<any> = ({ navigation }) => {
         )}
 
         {/* Transaction History List */}
-        <Text style={styles.sectionHeaderTitle}>Past Mandi Settlements</Text>
+        <Text style={styles.sectionHeaderTitle}>Payment history</Text>
 
         {filteredTransactions.map((item) => (
           <View key={item.id} style={styles.txnCard}>

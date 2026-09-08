@@ -1,45 +1,34 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
+  Linking,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-  Image,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Sprout,
-  ShieldCheck,
-  Zap,
-  TrendingUp,
-  ArrowRight,
-  User,
-  Building2,
-  Sparkles,
-  Scale,
-} from 'lucide-react-native';
-import { colors, typography, spacing, radius, shadows } from '../../theme';
-import { PrimaryButton } from '../../components/common/PrimaryButton';
-import { SecondaryButton } from '../../components/common/SecondaryButton';
-import { mockStore } from '../../store/mockStore';
+import { Ionicons } from '@expo/vector-icons';
+import { MapPin, Phone, Sprout, TicketCheck, Wallet } from 'lucide-react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { PrimaryButton } from '../../components/common/PrimaryButton';
+import { getFarmerCopy, type FarmerLanguage } from '../../i18n/farmerCopy';
+import { useAppStore } from '../../store';
+import { colors, radius, shadows, spacing, typography } from '../../theme';
 import type { RootStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Welcome'>;
 
+const languages: Array<{ id: FarmerLanguage; label: string; nativeLabel: string }> = [
+  { id: 'en', label: 'English', nativeLabel: 'English' },
+  { id: 'hi', label: 'Hindi', nativeLabel: 'हिन्दी' },
+  { id: 'pa', label: 'Punjabi', nativeLabel: 'ਪੰਜਾਬੀ' },
+];
+
 export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
-
-  const handleQuickEnterFarmer = () => {
-    mockStore.setRole('FARMER');
-    navigation.navigate('FarmerRoot');
-  };
-
-  const handleQuickEnterBuyer = () => {
-    mockStore.setRole('BUYER');
-    navigation.navigate('BuyerRoot');
-  };
+  const [state, store] = useAppStore();
+  const copy = getFarmerCopy(state.language);
 
   return (
     <View style={styles.container}>
@@ -50,108 +39,85 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Top Brand Header */}
-        <View style={styles.heroSection}>
-          <View style={styles.brandBadge}>
-            <Sprout size={18} color={colors.primary} />
-            <Text style={styles.brandBadgeText}>AGRIMANDI OPERATING SYSTEM</Text>
+        <View style={styles.brandRow}>
+          <View style={styles.brandIcon}>
+            <Sprout size={28} color={colors.primary} />
           </View>
-
-          <Text style={styles.heroTitle}>
-            Modern Pragmatic{'\n'}
-            <Text style={styles.heroHighlight}>AgriFintech</Text> Platform
-          </Text>
-
-          <Text style={styles.heroSubtitle}>
-            Bridging Indian farmers directly to electronic APMC mandis with AI-powered quality grading, dynamic queue scheduling, and instant DBT escrow settlements.
-          </Text>
+          <Text style={styles.brandName}>{copy.brand}</Text>
         </View>
 
-        {/* Value Proposition Cards */}
-        <View style={styles.featuresList}>
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIconBox, { backgroundColor: colors.primaryBg }]}>
-              <Sparkles size={20} color={colors.primary} />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>AI Grain Quality & Grading</Text>
-              <Text style={styles.featureDesc}>
-                Instant smartphone camera analysis for moisture, foreign matter, and AGMARK Grade A determination.
-              </Text>
-            </View>
-          </View>
+        <View style={styles.hero}>
+          <Text style={styles.heroTitle}>{copy.welcomeTitle}</Text>
+          <Text style={styles.heroBody}>{copy.welcomeBody}</Text>
+        </View>
 
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIconBox, { backgroundColor: '#FEF3C7' }]}>
-              <Zap size={20} color="#D97706" />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Dynamic Mandi Queue Tokens</Text>
-              <Text style={styles.featureDesc}>
-                Avoid 6-hour highway jams. Real-time 'WAIT' or 'LEAVE NOW' velocity guidance synced with mandi weighbridges.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIconBox, { backgroundColor: '#E0F2FE' }]}>
-              <ShieldCheck size={20} color="#0284C7" />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Instant Direct DBT Settlements</Text>
-              <Text style={styles.featureDesc}>
-                Guaranteed escrow clearing account disbursal with digital APMC J-Form tax receipts.
-              </Text>
-            </View>
+        <View style={styles.languageCard}>
+          <Text style={styles.sectionTitle}>{copy.chooseLanguage}</Text>
+          <Text style={styles.sectionHelp}>{copy.chooseLanguageHelp}</Text>
+          <View style={styles.languageList}>
+            {languages.map((language) => {
+              const selected = state.language === language.id;
+              return (
+                <TouchableOpacity
+                  key={language.id}
+                  style={[styles.languageButton, selected && styles.languageButtonSelected]}
+                  onPress={() => store.setLanguage(language.id)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${language.label}, ${language.nativeLabel}`}
+                >
+                  <Text style={[styles.languageText, selected && styles.languageTextSelected]}>
+                    {language.nativeLabel}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        {/* Demo Fast-Tracks */}
-        <View style={styles.quickAccessSection}>
-          <Text style={styles.quickAccessTitle}>Select Role to Start Demo</Text>
-          
-          <TouchableOpacity
-            style={styles.roleCard}
-            onPress={handleQuickEnterFarmer}
-            activeOpacity={0.85}
-          >
-            <View style={styles.roleLeft}>
-              <View style={[styles.roleIconBox, { backgroundColor: colors.primaryBg }]}>
-                <User size={22} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={styles.roleName}>Kisan (Farmer)</Text>
-                <Text style={styles.roleSub}>Rajesh Kumar • 20 QTL Sharbati Wheat</Text>
-              </View>
-            </View>
-            <ArrowRight size={20} color={colors.primary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.roleCard}
-            onPress={handleQuickEnterBuyer}
-            activeOpacity={0.85}
-          >
-            <View style={styles.roleLeft}>
-              <View style={[styles.roleIconBox, { backgroundColor: '#E0F2FE' }]}>
-                <Building2 size={22} color="#0284C7" />
-              </View>
-              <View>
-                <Text style={styles.roleName}>Buyer / Mandi Operator</Text>
-                <Text style={styles.roleSub}>Kisan Agro • Taraori Mandi Yard 2</Text>
-              </View>
-            </View>
-            <ArrowRight size={20} color="#0284C7" />
-          </TouchableOpacity>
+        <View style={styles.benefitsCard}>
+          <View style={styles.benefitRow}>
+            <MapPin size={22} color={colors.primary} />
+            <Text style={styles.benefitText}>{copy.findMandi}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.benefitRow}>
+            <TicketCheck size={22} color={colors.primary} />
+            <Text style={styles.benefitText}>{copy.myToken}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.benefitRow}>
+            <Wallet size={22} color={colors.primary} />
+            <Text style={styles.benefitText}>{copy.payments}</Text>
+          </View>
         </View>
 
-        {/* Onboarding Flow CTA */}
-        <View style={styles.ctaSection}>
-          <SecondaryButton
-            title="Step-by-Step Onboarding Walkthrough"
-            onPress={() => navigation.navigate('RoleSelection')}
-          />
-        </View>
+        <PrimaryButton
+          title={copy.continueAsFarmer}
+          rightIconName="arrow-forward"
+          onPress={() => navigation.navigate('LoginOTP', { role: 'FARMER' })}
+          style={styles.continueButton}
+        />
+
+        <TouchableOpacity
+          style={styles.supportButton}
+          onPress={() => Linking.openURL('tel:18001239876')}
+          accessibilityRole="button"
+          accessibilityLabel={copy.support}
+        >
+          <Phone size={20} color={colors.primary} />
+          <Text style={styles.supportText}>{copy.support}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.buyerLoginButton}
+          onPress={() => navigation.navigate('LoginOTP', { role: 'BUYER' })}
+          accessibilityRole="button"
+          accessibilityLabel="Mandi buyer or operator login"
+        >
+          <Text style={styles.buyerLoginText}>Mandi buyer / operator login</Text>
+          <Ionicons name="arrow-forward" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -163,124 +129,141 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: spacing.md,
+    width: '100%',
+    maxWidth: 520,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.gutterMobile,
     gap: spacing.lg,
   },
-  heroSection: {
-    alignItems: 'flex-start',
-    marginTop: spacing.sm,
-  },
-  brandBadge: {
+  brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.primaryBg,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: radius.full,
-    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
-  brandBadgeText: {
-    fontSize: typography.sizes.xs,
-    fontFamily: typography.fontFamilies.bold,
+  brandIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryTint,
+  },
+  brandName: {
+    ...typography.headlineLg,
     color: colors.primaryDark,
-    letterSpacing: 0.8,
+    fontWeight: '700',
+  },
+  hero: {
+    gap: spacing.sm,
   },
   heroTitle: {
+    ...typography.headlineXl,
+    color: colors.textPrimary,
     fontSize: 32,
     lineHeight: 40,
-    fontFamily: typography.fontFamilies.bold,
-    color: colors.textPrimary,
   },
-  heroHighlight: {
-    color: colors.primary,
-  },
-  heroSubtitle: {
-    fontSize: typography.sizes.sm,
-    fontFamily: typography.fontFamilies.regular,
+  heroBody: {
+    ...typography.bodyLg,
     color: colors.textSecondary,
-    marginTop: spacing.sm,
-    lineHeight: 22,
+    fontSize: 17,
+    lineHeight: 26,
   },
-  featuresList: {
-    gap: spacing.sm,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+  languageCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    gap: spacing.md,
+    borderColor: colors.border,
     ...shadows.sm,
   },
-  featureIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureContent: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: typography.sizes.sm,
-    fontFamily: typography.fontFamilies.bold,
+  sectionTitle: {
+    ...typography.headlineMd,
     color: colors.textPrimary,
   },
-  featureDesc: {
-    fontSize: typography.sizes.xs,
-    fontFamily: typography.fontFamilies.regular,
+  sectionHelp: {
+    ...typography.bodyBase,
     color: colors.textSecondary,
-    lineHeight: 18,
-    marginTop: 2,
+    fontSize: 15,
+    marginTop: 4,
   },
-  quickAccessSection: {
-    gap: spacing.sm,
-  },
-  quickAccessTitle: {
-    fontSize: typography.sizes.md,
-    fontFamily: typography.fontFamilies.bold,
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  roleCard: {
+  languageList: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+  },
+  languageButton: {
+    minWidth: 92,
+    minHeight: 52,
+    flexGrow: 1,
     borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1.5,
-    borderColor: colors.borderLight,
-    ...shadows.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceContainer,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    paddingHorizontal: spacing.sm,
   },
-  roleLeft: {
+  languageButtonSelected: {
+    backgroundColor: colors.primaryTint,
+    borderColor: colors.primary,
+  },
+  languageText: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  languageTextSelected: {
+    color: colors.primaryDark,
+  },
+  benefitsCard: {
+    backgroundColor: colors.primaryTint,
+    borderRadius: radius.xl,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  benefitRow: {
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  roleIconBox: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.full,
+  benefitText: {
+    ...typography.bodyLg,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  continueButton: {
+    height: 56,
+  },
+  supportButton: {
+    minHeight: 52,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
   },
-  roleName: {
-    fontSize: typography.sizes.md,
-    fontFamily: typography.fontFamilies.bold,
-    color: colors.textPrimary,
+  supportText: {
+    ...typography.bodyLg,
+    color: colors.primary,
+    fontWeight: '600',
   },
-  roleSub: {
-    fontSize: typography.sizes.xs,
-    fontFamily: typography.fontFamilies.regular,
+  buyerLoginButton: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  buyerLoginText: {
+    ...typography.bodyBase,
     color: colors.textSecondary,
-    marginTop: 2,
-  },
-  ctaSection: {
-    marginTop: spacing.xs,
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

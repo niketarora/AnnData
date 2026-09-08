@@ -30,7 +30,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Best Places to Sell"
+        title="Find a mandi"
         showBack
         onBack={() => navigation.goBack()}
         onNotificationPress={() => navigation.navigate('Notifications')}
@@ -57,9 +57,9 @@ export const BestPlacesToSellScreen: React.FC = () => {
               <Text style={styles.changeLotText}>Change Lot</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.mainTitle}>Best Places to Sell</Text>
+          <Text style={styles.mainTitle}>Choose a mandi</Text>
           <Text style={styles.subTitle}>
-            Showing 3 active mandis for Wheat (20 QTL) ranked by Expected Net Realization
+            Compare how much money you will receive after travel and mandi fees.
           </Text>
         </View>
 
@@ -69,9 +69,9 @@ export const BestPlacesToSellScreen: React.FC = () => {
             <Ionicons name="bulb-outline" size={20} color={colors.info} />
           </View>
           <View style={styles.explainerTextContainer}>
-            <Text style={styles.explainerTitle}>Why Net Realization?</Text>
+            <Text style={styles.explainerTitle}>How we compare mandis</Text>
             <Text style={styles.explainerBody}>
-              We calculate gross crop value minus transport distance and queue waiting loss to find your real take-home earnings.
+              We subtract travel and mandi fees so you can compare the final amount.
             </Text>
           </View>
         </View>
@@ -88,7 +88,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
               color={sortMode === 'net' ? colors.onPrimary : colors.textSecondary}
             />
             <Text style={[styles.sortChipText, sortMode === 'net' && styles.sortChipTextActive]}>
-              Rank by Net Realization
+              Most money
             </Text>
           </TouchableOpacity>
 
@@ -102,7 +102,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
               color={sortMode === 'distance' ? colors.onPrimary : colors.textSecondary}
             />
             <Text style={[styles.sortChipText, sortMode === 'distance' && styles.sortChipTextActive]}>
-              Shortest Distance
+              Nearest
             </Text>
           </TouchableOpacity>
 
@@ -116,7 +116,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
               color={sortMode === 'waiting' ? colors.onPrimary : colors.textSecondary}
             />
             <Text style={[styles.sortChipText, sortMode === 'waiting' && styles.sortChipTextActive]}>
-              Lowest Waiting Time
+              Shortest wait
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -139,10 +139,10 @@ export const BestPlacesToSellScreen: React.FC = () => {
                   <View style={styles.topPickStrip}>
                     <View style={styles.topPickLeft}>
                       <Ionicons name="star" size={14} color={colors.onPrimary} />
-                      <Text style={styles.topPickText}>RECOMMENDED BEST NET REALIZATION</Text>
+                      <Text style={styles.topPickText}>RECOMMENDED FOR YOU</Text>
                     </View>
                     <View style={styles.topPickBadge}>
-                      <Text style={styles.topPickBadgeText}>Top Pick</Text>
+                      <Text style={styles.topPickBadgeText}>Best choice</Text>
                     </View>
                   </View>
                 )}
@@ -150,7 +150,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
                 <View style={styles.mandiCardBody}>
                   {/* Header & Distance */}
                   <View style={styles.cardHeaderRow}>
-                    <View>
+                    <View style={styles.marketTitleBlock}>
                       <View style={styles.locationRow}>
                         <Ionicons name="location-sharp" size={13} color={colors.textSecondary} />
                         <Text style={styles.distanceText}>
@@ -215,14 +215,14 @@ export const BestPlacesToSellScreen: React.FC = () => {
                     ]}
                   >
                     <View style={styles.netBoxHeader}>
-                      <Text style={styles.netBoxLabel}>EXPECTED NET PAYOUT</Text>
+                      <Text style={styles.netBoxLabel}>YOU WILL RECEIVE</Text>
                       <Text
                         style={[
                           styles.netRateTag,
                           { color: isTopRecommended ? colors.success : colors.primaryDark },
                         ]}
                       >
-                        ₹{mkt.netRatePerQuintal.toLocaleString('en-IN')} / QTL Net
+                        ₹{mkt.netRatePerQuintal.toLocaleString('en-IN')} per quintal
                       </Text>
                     </View>
 
@@ -235,7 +235,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
                       >
                         ₹{mkt.expectedNetPayout.toLocaleString('en-IN')}
                       </Text>
-                      <Text style={styles.netAmountSub}>for 20 Quintals</Text>
+                    <Text style={styles.netAmountSub}>for 20 quintals</Text>
                     </View>
 
                     <Text
@@ -248,72 +248,21 @@ export const BestPlacesToSellScreen: React.FC = () => {
                     </Text>
                   </View>
 
-                  {/* Mini Cost Breakdown Strip */}
-                  <View style={styles.breakdownStrip}>
-                    <View style={styles.breakdownCol}>
-                      <Text style={styles.breakdownLabel}>Base Gross Price</Text>
-                      <Text style={styles.breakdownValue}>
-                        ₹{mkt.grossPricePerQuintal.toLocaleString('en-IN')}{' '}
-                        <Text style={styles.breakdownSub}>/ QTL</Text>
-                      </Text>
-                      <Text style={styles.breakdownTotal}>
-                        Total: ₹{(mkt.grossPricePerQuintal * 20).toLocaleString('en-IN')}
-                      </Text>
+                  <View style={styles.factsRow}>
+                    <View style={styles.factItem}>
+                      <Ionicons name="navigate-outline" size={20} color={colors.primary} />
+                      <Text style={styles.factLabel}>Distance</Text>
+                      <Text style={styles.factValue}>{mkt.distanceKm} km</Text>
                     </View>
-                    <View style={styles.breakdownCol}>
-                      <Text style={styles.breakdownLabel}>Deductions & Transit</Text>
-                      <Text style={[styles.breakdownValue, { color: colors.danger }]}>
-                        -₹{(mkt.transportCost + mkt.mandiCessDeduction).toLocaleString('en-IN')}
-                      </Text>
-                      <Text style={styles.breakdownTotal}>
-                        Transport ₹{mkt.transportCost} • Mandi ₹{mkt.mandiCessDeduction}
-                      </Text>
+                    <View style={styles.factItem}>
+                      <Ionicons name="car-outline" size={20} color={colors.primary} />
+                      <Text style={styles.factLabel}>Travel cost</Text>
+                      <Text style={styles.factValue}>₹{mkt.transportCost}</Text>
                     </View>
-                  </View>
-
-                  {/* Operational Metrics Grid */}
-                  <View style={styles.metricsGrid}>
-                    <View style={styles.metricItem}>
-                      <Ionicons
-                        name="bus-outline"
-                        size={17}
-                        color={mkt.gateWaitingMinutes > 60 ? colors.danger : colors.success}
-                      />
-                      <View>
-                        <Text style={styles.metricLabel}>Gate Waiting</Text>
-                        <Text
-                          style={[
-                            styles.metricValue,
-                            mkt.gateWaitingMinutes > 60 && { color: colors.danger },
-                          ]}
-                        >
-                          ~{mkt.gateWaitingMinutes} min {mkt.gateWaitingMinutes > 60 && '⚠️'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.metricItem}>
-                      <Ionicons name="calendar-outline" size={17} color={colors.primaryLight} />
-                      <View>
-                        <Text style={styles.metricLabel}>Daily Quota</Text>
-                        <Text style={styles.metricValue}>{mkt.dailySlotsRemaining} slots today</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.metricItem}>
-                      <Ionicons name="bar-chart-outline" size={17} color={colors.primaryLight} />
-                      <View>
-                        <Text style={styles.metricLabel}>Market Demand</Text>
-                        <Text style={styles.metricValue}>{mkt.openDemandQuintals} QTL open</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.metricItem}>
-                      <Ionicons name="people-outline" size={17} color={colors.primaryLight} />
-                      <View>
-                        <Text style={styles.metricLabel}>Yard Crowd</Text>
-                        <Text style={styles.metricValue}>{mkt.queueCongestion} Density</Text>
-                      </View>
+                    <View style={styles.factItem}>
+                      <Ionicons name="time-outline" size={20} color={colors.primary} />
+                      <Text style={styles.factLabel}>Waiting</Text>
+                      <Text style={styles.factValue}>{mkt.gateWaitingMinutes} min</Text>
                     </View>
                   </View>
 
@@ -325,7 +274,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
                       activeOpacity={0.8}
                     >
                       <Ionicons name="receipt-outline" size={17} color={colors.textPrimary} />
-                      <Text style={styles.breakdownBtnText}>Breakdown</Text>
+                      <Text style={styles.breakdownBtnText}>Price details</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -334,7 +283,7 @@ export const BestPlacesToSellScreen: React.FC = () => {
                       activeOpacity={0.88}
                     >
                       <Ionicons name="ticket-outline" size={18} color={colors.onPrimary} />
-                      <Text style={styles.requestSlotBtnText}>Request Slot</Text>
+                      <Text style={styles.requestSlotBtnText}>Book this mandi</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -510,11 +459,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    minWidth: 0,
   },
   topPickText: {
     ...typography.badgeLabel,
     color: colors.onPrimary,
     letterSpacing: 0.5,
+    flexShrink: 1,
   },
   topPickBadge: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -535,6 +487,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    gap: spacing.spaceXs,
+  },
+  marketTitleBlock: {
+    flex: 1,
+    minWidth: 0,
   },
   locationRow: {
     flexDirection: 'row',
@@ -544,11 +501,14 @@ const styles = StyleSheet.create({
   distanceText: {
     ...typography.caption,
     color: colors.textSecondary,
+    fontSize: 14,
+    flexShrink: 1,
   },
   mandiNameText: {
     ...typography.headlineLg,
     color: colors.textPrimary,
     marginTop: 2,
+    flexShrink: 1,
   },
   gateStatusPill: {
     flexDirection: 'row',
@@ -591,6 +551,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 4,
   },
   netBoxLabel: {
     ...typography.captionBold,
@@ -599,6 +561,7 @@ const styles = StyleSheet.create({
   },
   netRateTag: {
     ...typography.captionBold,
+    fontSize: 13,
   },
   netAmountRow: {
     flexDirection: 'row',
@@ -612,11 +575,38 @@ const styles = StyleSheet.create({
   netAmountSub: {
     ...typography.caption,
     color: colors.textSecondary,
+    fontSize: 14,
   },
   netRationale: {
-    ...typography.caption,
-    lineHeight: 16,
+    ...typography.bodyBase,
+    lineHeight: 20,
     marginTop: 2,
+  },
+  factsRow: {
+    flexDirection: 'row',
+    gap: spacing.spaceXs,
+  },
+  factItem: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 84,
+    justifyContent: 'center',
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceContainerLow,
+    padding: spacing.spaceXs,
+  },
+  factLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  factValue: {
+    ...typography.bodyBaseMedium,
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 1,
   },
   breakdownStrip: {
     flexDirection: 'row',

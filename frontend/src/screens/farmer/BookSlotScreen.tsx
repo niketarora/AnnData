@@ -59,7 +59,7 @@ export const BookSlotScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Book Mandi Slot"
+        title="Book your mandi time"
         subtitle={market.name}
         showBack
         onBack={() => navigation.goBack()}
@@ -87,7 +87,7 @@ export const BookSlotScreen: React.FC = () => {
 
         {/* Date Selection */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionLabel}>SELECT DATE</Text>
+          <Text style={styles.sectionLabel}>Choose a date</Text>
           <View style={styles.dateRow}>
             {(['Today', 'Tomorrow'] as const).map((d) => (
               <TouchableOpacity
@@ -111,7 +111,7 @@ export const BookSlotScreen: React.FC = () => {
         {/* Time Slot Selection */}
         <View style={styles.sectionCard}>
           <View style={styles.slotHeaderRow}>
-            <Text style={styles.sectionLabel}>SELECT TIME WINDOW</Text>
+            <Text style={styles.sectionLabel}>Choose a time</Text>
             <Text style={styles.quotaText}>6 slots remaining</Text>
           </View>
 
@@ -143,7 +143,7 @@ export const BookSlotScreen: React.FC = () => {
 
                 {s.recommended ? (
                   <View style={styles.recommendedBadge}>
-                    <Text style={styles.recommendedBadgeText}>Optimal Queue</Text>
+                    <Text style={styles.recommendedBadgeText}>Shortest wait</Text>
                   </View>
                 ) : (
                   <Text style={styles.quotaAvailable}>{s.quota} left</Text>
@@ -155,9 +155,9 @@ export const BookSlotScreen: React.FC = () => {
 
         {/* Carrier / Vehicle Details */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionLabel}>CARRIER & DRIVER DETAILS</Text>
+          <Text style={styles.sectionLabel}>Vehicle and driver</Text>
           <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>Vehicle Registration</Text>
+            <Text style={styles.fieldLabel}>Vehicle number</Text>
             <TextInput
               style={styles.textInput}
               value={vehicleNumber}
@@ -166,7 +166,7 @@ export const BookSlotScreen: React.FC = () => {
             />
           </View>
           <View style={styles.inputGroup}>
-            <Text style={styles.fieldLabel}>Driver Full Name</Text>
+            <Text style={styles.fieldLabel}>Driver name</Text>
             <TextInput
               style={styles.textInput}
               value={driverName}
@@ -179,11 +179,11 @@ export const BookSlotScreen: React.FC = () => {
         {/* Booking Summary Strip */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Expected Arrival Gate</Text>
+            <Text style={styles.summaryLabel}>Go to</Text>
             <Text style={styles.summaryValue}>Gate 2 Express Line</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Estimated Net Payout</Text>
+            <Text style={styles.summaryLabel}>You may receive</Text>
             <Text style={[styles.summaryValue, { color: colors.success, fontWeight: '700' }]}>
               ₹{market.expectedNetPayout.toLocaleString('en-IN')}
             </Text>
@@ -192,7 +192,7 @@ export const BookSlotScreen: React.FC = () => {
 
         {/* Action Button */}
         <PrimaryButton
-          title={loading ? 'Reserving Capacity...' : 'Confirm Slot & Generate Token'}
+          title={loading ? 'Booking your time...' : 'Book time and get token'}
           loading={loading}
           iconName="ticket-outline"
           onPress={handleConfirmBooking}

@@ -4,29 +4,16 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  User,
   Building2,
   ShieldCheck,
   CreditCard,
-  Settings,
-  Scale,
-  LogOut,
-  RefreshCw,
-  Repeat,
-  ChevronRight,
-  ExternalLink,
 } from 'lucide-react-native';
 import { useAppStore } from '../../store';
-import { mockStore } from '../../store/mockStore';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
 import { AppHeader } from '../../components/common/AppHeader';
-import { PrimaryButton } from '../../components/common/PrimaryButton';
-import { SecondaryButton } from '../../components/common/SecondaryButton';
 import { StatusChip } from '../../components/common/StatusChip';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BuyerStackParamList } from '../../types/navigation';
@@ -38,33 +25,11 @@ export const BuyerProfileScreen: React.FC<Props> = ({ navigation }) => {
   const state = useAppStore();
   const { buyer } = state;
 
-  const handleSwitchToFarmer = () => {
-    mockStore.setRole('FARMER');
-  };
-
-  const handleResetDemo = () => {
-    Alert.alert(
-      'Reset Demo Scenario',
-      'This will reset all queue tokens, inspection records, and offers back to the pristine initial state.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset Everything',
-          style: 'destructive',
-          onPress: () => {
-            mockStore.resetScenario();
-            Alert.alert('Demo Reset', 'All states have been reset to pristine initial values.');
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Buyer & Operator Profile"
-        subtitle="APMC Mandi Licensed Procurement Portal"
+        title="Operator profile"
+        subtitle="Mandi and account settings"
       />
 
       <ScrollView
@@ -139,7 +104,7 @@ export const BuyerProfileScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <CreditCard size={18} color={colors.primary} />
-            <Text style={styles.cardTitle}>Settlement Escrow Account</Text>
+            <Text style={styles.cardTitle}>Payment account</Text>
           </View>
 
           <View style={styles.escrowBox}>
@@ -149,48 +114,18 @@ export const BuyerProfileScreen: React.FC<Props> = ({ navigation }) => {
             </View>
             <Text style={styles.escrowAccNo}>A/C: **** **** 9821</Text>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceLabel}>Available Escrow Balance:</Text>
+              <Text style={styles.balanceLabel}>Available balance:</Text>
               <Text style={styles.balanceVal}>₹4,50,000.00</Text>
             </View>
           </View>
         </View>
 
-        {/* Persona Switch & Demo Actions */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Repeat size={18} color={colors.primary} />
-            <Text style={styles.cardTitle}>Role & Demo Controls</Text>
-          </View>
-
-          <TouchableOpacity style={styles.actionRow} onPress={handleSwitchToFarmer}>
-            <View style={styles.actionLeft}>
-              <User size={18} color={colors.primary} />
-              <View>
-                <Text style={styles.actionTitle}>Switch to Farmer (Kisan) Mode</Text>
-                <Text style={styles.actionSub}>Experience the journey from farmer perspective</Text>
-              </View>
-            </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.actionRow} onPress={handleResetDemo}>
-            <View style={styles.actionLeft}>
-              <RefreshCw size={18} color={colors.error} />
-              <View>
-                <Text style={[styles.actionTitle, { color: colors.error }]}>Reset Demo Scenario</Text>
-                <Text style={styles.actionSub}>Restore pristine seed data and queue counters</Text>
-              </View>
-            </View>
-            <ChevronRight size={18} color={colors.textTertiary} />
-          </TouchableOpacity>
-        </View>
-
         {/* Regulatory footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            AgriMandi OS • APMC Digital Mandi Regulation Compliant
+            AgriMandi • Verified mandi operator account
           </Text>
-          <Text style={styles.footerSub}>App Version 1.0.0 (Phase 1 Frontend Prototype)</Text>
+          <Text style={styles.footerSub}>App version 1.0.0</Text>
         </View>
       </ScrollView>
     </View>

@@ -1,17 +1,18 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
   Home,
-  TrendingUp,
   PlusCircle,
   Clock,
-  User,
-  Bell,
+  Wallet,
+  CircleHelp,
 } from 'lucide-react-native';
 import { colors, typography, spacing } from '../theme';
 import type { FarmerTabParamList, FarmerStackParamList } from '../types/navigation';
+import { useAppStore } from '../store';
+import { getFarmerCopy } from '../i18n/farmerCopy';
 
 // Farmer Screens
 import { FarmerHomeScreen } from '../screens/farmer/FarmerHomeScreen';
@@ -32,12 +33,20 @@ import { PaymentStatusScreen } from '../screens/farmer/PaymentStatusScreen';
 import { DigitalReceiptScreen } from '../screens/farmer/DigitalReceiptScreen';
 import { SalesHistoryScreen } from '../screens/farmer/SalesHistoryScreen';
 import { FarmerProfileScreen } from '../screens/farmer/FarmerProfileScreen';
+import { FarmerHelpScreen } from '../screens/farmer/FarmerHelpScreen';
 import { NotificationsScreen } from '../screens/shared/NotificationsScreen';
 
 const Tab = createBottomTabNavigator<FarmerTabParamList>();
 const Stack = createNativeStackNavigator<FarmerStackParamList>();
 
+const FarmerSellTabScreen = () => <CreateCropLotScreen showBack={false} />;
+const FarmerTokenTabScreen = () => <LiveMandiQueueScreen showBack={false} />;
+const FarmerPaymentsTabScreen = () => <SalesHistoryScreen showBack={false} />;
+
 const FarmerTabs: React.FC = () => {
+  const [state] = useAppStore();
+  const copy = getFarmerCopy(state.language);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -48,54 +57,58 @@ const FarmerTabs: React.FC = () => {
           backgroundColor: colors.surface,
           borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: Platform.OS === 'ios' ? 92 : 72,
           paddingBottom: Platform.OS === 'ios' ? 28 : 8,
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontFamily: typography.fontFamilies.medium,
         },
+        tabBarItemStyle: {
+          minWidth: 0,
+        },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen
         name="FarmerHomeTab"
         component={FarmerHomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: copy.home,
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tab.Screen
-        name="FarmerMarketsTab"
-        component={BestPlacesToSellScreen}
-        options={{
-          tabBarLabel: 'Best Mandis',
-          tabBarIcon: ({ color, size }) => <TrendingUp size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
         name="FarmerSellTab"
-        component={CreateCropLotScreen}
+        component={FarmerSellTabScreen}
         options={{
-          tabBarLabel: 'AI Scan',
+          tabBarLabel: copy.sellCrop,
           tabBarIcon: ({ color, size }) => <PlusCircle size={size} color={color} />,
         }}
       />
       <Tab.Screen
-        name="FarmerBookingsTab"
-        component={LiveMandiQueueScreen}
+        name="FarmerTokenTab"
+        component={FarmerTokenTabScreen}
         options={{
-          tabBarLabel: 'Live Queue',
+          tabBarLabel: copy.myToken,
           tabBarIcon: ({ color, size }) => <Clock size={size} color={color} />,
         }}
       />
       <Tab.Screen
-        name="FarmerProfileTab"
-        component={FarmerProfileScreen}
+        name="FarmerPaymentsTab"
+        component={FarmerPaymentsTabScreen}
         options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarLabel: copy.payments,
+          tabBarIcon: ({ color, size }) => <Wallet size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="FarmerHelpTab"
+        component={FarmerHelpScreen}
+        options={{
+          tabBarLabel: copy.help,
+          tabBarIcon: ({ color, size }) => <CircleHelp size={size} color={color} />,
         }}
       />
     </Tab.Navigator>

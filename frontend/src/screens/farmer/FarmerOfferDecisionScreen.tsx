@@ -26,7 +26,7 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
   };
 
   const handleRejectConfirm = () => {
-    store.rejectOffer(offer?.id || 'offer-001');
+    store.requestBetterOffer();
     setRejectModalVisible(false);
     navigation.goBack();
   };
@@ -34,8 +34,8 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Buyer Purchase Offer"
-        subtitle="Binding Mandi Settlement"
+        title="Final buyer offer"
+        subtitle="Review before you accept"
         showBack
         onBack={() => navigation.goBack()}
         onNotificationPress={() => navigation.navigate('Notifications')}
@@ -51,7 +51,7 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
         <View style={styles.timerRow}>
           <View style={styles.timerPill}>
             <Ionicons name="time" size={14} color={colors.warning} />
-            <Text style={styles.timerText}>Offer expires in 12m 45s</Text>
+            <Text style={styles.timerText}>12 minutes left • You can let it expire</Text>
           </View>
           <Text style={styles.tokenText}>Token #{state.queue.tokenNumber}</Text>
         </View>
@@ -64,11 +64,11 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
             </View>
             <View style={styles.buyerInfo}>
               <Text style={styles.buyerName}>{offer?.buyerName || 'Anil Sharma'}</Text>
-              <Text style={styles.buyerSub}>Authorized APMC Mandi Licensee</Text>
+              <Text style={styles.buyerSub}>Verified mandi buyer</Text>
             </View>
             <View style={styles.verifiedTag}>
               <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-              <Text style={styles.verifiedTagText}>Escrow Verified</Text>
+              <Text style={styles.verifiedTagText}>Buyer verified</Text>
             </View>
           </View>
 
@@ -76,7 +76,9 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
           <View style={styles.commodityStrip}>
             <View>
               <Text style={styles.cropTitle}>{offer?.cropVariety || 'Wheat (Sharbati Gold)'}</Text>
-              <Text style={styles.cropGrade}>Verified {offer?.finalGrade || 'Grade A'} Quality</Text>
+              <Text style={styles.cropGrade}>
+                {offer?.finalGrade || 'Grade A'} • Mandi average today: ₹2,440/quintal
+              </Text>
             </View>
             <View style={styles.rateCol}>
               <Text style={styles.rateAmount}>₹{offer?.ratePerQuintal || 2485}</Text>
@@ -86,20 +88,20 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
 
           {/* Big Take-Home Payout Highlight */}
           <View style={styles.payoutHighlight}>
-            <Text style={styles.payoutLabel}>FINAL NET TAKE-HOME PAYOUT</Text>
+            <Text style={styles.payoutLabel}>YOU WILL RECEIVE</Text>
             <Text style={styles.payoutAmount}>
               ₹{(offer?.netPayout || 48654.5).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
             </Text>
-            <Text style={styles.payoutMode}>Direct Instant Bank Credit via UPI</Text>
+            <Text style={styles.payoutMode}>Sent to your bank after you accept</Text>
           </View>
 
           {/* Full Ledgers Breakdown */}
           <View style={styles.breakdownTable}>
-            <Text style={styles.tableTitle}>Settlement Math Breakdown</Text>
+            <Text style={styles.tableTitle}>Price details</Text>
 
             <View style={styles.row}>
               <Text style={styles.rowLabel}>
-                Gross Crop Value ({offer?.quantityQuintals || 19.70} QTL × ₹{offer?.ratePerQuintal || 2485})
+                Crop value ({offer?.quantityQuintals || 19.70} quintals × ₹{offer?.ratePerQuintal || 2485})
               </Text>
               <Text style={styles.rowValue}>
                 ₹{(offer?.grossAmount || 48954.5).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
@@ -107,19 +109,19 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Mandi Cess & Market Development Fee</Text>
+              <Text style={styles.rowLabel}>Mandi fee</Text>
               <Text style={[styles.rowValue, { color: colors.danger }]}>
                 -₹{(offer?.deductions?.mandiCess || 300).toFixed(2)}
               </Text>
             </View>
 
             <View style={styles.row}>
-              <Text style={styles.rowLabel}>Unloading & Cleaning Charges</Text>
-              <Text style={[styles.rowValue, { color: colors.success }]}>₹0.00 (Waived)</Text>
+              <Text style={styles.rowLabel}>Unloading and cleaning</Text>
+              <Text style={[styles.rowValue, { color: colors.success }]}>₹0 (No charge)</Text>
             </View>
 
             <View style={[styles.row, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Net Payable to Farmer</Text>
+              <Text style={styles.totalLabel}>Final amount</Text>
               <Text style={styles.totalValue}>
                 ₹{(offer?.netPayout || 48654.5).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </Text>
@@ -139,13 +141,13 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
         {/* Action Buttons Row */}
         <View style={styles.actionButtonsCol}>
           <PrimaryButton
-            title="Accept Binding Offer & Request Payment"
+            title={`Accept ₹${Math.round(offer?.netPayout || 48654.5).toLocaleString('en-IN')}`}
             iconName="checkmark-circle-outline"
             onPress={() => setConfirmModalVisible(true)}
           />
 
           <SecondaryButton
-            title="Decline / Counter Offer"
+            title="Ask for a better price"
             iconName="close-circle-outline"
             variant="outline"
             onPress={() => setRejectModalVisible(true)}
@@ -156,12 +158,12 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
       {/* Accept Confirmation Modal */}
       <ConfirmationModal
         visible={confirmModalVisible}
-        title="Accept Binding Offer?"
-        message={`Are you sure you want to accept ₹${(offer?.netPayout || 48654.5).toLocaleString('en-IN', {
+        title="Accept this offer?"
+        message={`You will receive ₹${(offer?.netPayout || 48654.5).toLocaleString('en-IN', {
           minimumFractionDigits: 2,
-        })} for ${offer?.quantityQuintals || 19.70} Quintals of Wheat? This transaction will be electronically settled.`}
-        confirmText="Yes, Accept Offer"
-        cancelText="Review Again"
+        })} for ${offer?.quantityQuintals || 19.70} quintals of wheat. The money will be sent to your bank.`}
+        confirmText="Accept and get paid"
+        cancelText="Check again"
         iconName="shield-checkmark"
         onConfirm={handleAcceptConfirm}
         onCancel={() => setConfirmModalVisible(false)}
@@ -170,11 +172,10 @@ export const FarmerOfferDecisionScreen: React.FC = () => {
       {/* Reject Confirmation Modal */}
       <ConfirmationModal
         visible={rejectModalVisible}
-        title="Decline Offer?"
-        message="Declining will notify the Mandi buyer and release the lot back to market comparison."
-        confirmText="Decline Offer"
+        title="Ask for a better price?"
+        message="The buyer will be asked to review the price and send another offer."
+        confirmText="Send request"
         cancelText="Cancel"
-        confirmVariant="danger"
         iconName="alert-circle"
         onConfirm={handleRejectConfirm}
         onCancel={() => setRejectModalVisible(false)}

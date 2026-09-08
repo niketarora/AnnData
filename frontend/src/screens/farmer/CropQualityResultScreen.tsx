@@ -28,7 +28,7 @@ export const CropQualityResultScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <AppHeader
-        title="Crop Quality AI Inspection"
+        title="Crop quality"
         showBack
         onBack={() => navigation.goBack()}
         onNotificationPress={() => navigation.navigate('Notifications')}
@@ -45,11 +45,11 @@ export const CropQualityResultScreen: React.FC = () => {
           <View style={styles.visionVersionRow}>
             <View style={styles.verifiedRow}>
               <Ionicons name="shield-checkmark" size={16} color={colors.success} />
-              <Text style={styles.verifiedText}>AI Computer Vision v3.4</Text>
+              <Text style={styles.verifiedText}>Photo check complete</Text>
             </View>
             <Text style={styles.scannedTimeText}>Scanned 2 mins ago</Text>
           </View>
-          <Text style={styles.pageHeading}>Crop Quality AI Inspection</Text>
+          <Text style={styles.pageHeading}>Your crop quality</Text>
           <Text style={styles.pageSubheading}>
             Instant grading for Wheat Lot{' '}
             <Text style={styles.lotIdBold}>#{lot?.id.toUpperCase() || 'WH-24-098'}</Text>
@@ -90,7 +90,7 @@ export const CropQualityResultScreen: React.FC = () => {
           <View style={styles.heroPricingSection}>
             <View style={styles.marketPriceBox}>
               <View style={styles.marketPriceHeader}>
-                <Text style={styles.marketPriceLabel}>ESTIMATED MARKET PRICE</Text>
+                <Text style={styles.marketPriceLabel}>LIKELY MANDI PRICE</Text>
                 <Ionicons name="trending-up" size={18} color={colors.success} />
               </View>
               <View style={styles.priceValueRow}>
@@ -119,7 +119,7 @@ export const CropQualityResultScreen: React.FC = () => {
 
         {/* Quality Factor Parameters Section */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Quality Factor Parameters</Text>
+          <Text style={styles.sectionTitle}>Crop quality details</Text>
           <View style={styles.agmarknetBadge}>
             <Ionicons name="sparkles" size={13} color={colors.success} />
             <Text style={styles.agmarknetText}>Agmarknet Verified</Text>
@@ -244,7 +244,7 @@ export const CropQualityResultScreen: React.FC = () => {
         {/* Action CTA Panel */}
         <View style={styles.ctaContainer}>
           <PrimaryButton
-            title="Find Best Place to Sell (3 Markets Found)"
+            title="Compare 3 mandis"
             rightIconName="arrow-forward"
             onPress={() => navigation.navigate('BestPlacesToSell')}
           />
