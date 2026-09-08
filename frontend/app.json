@@ -21,6 +21,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1fd8ca31-ff25-4aef-ac30-9f27936b5f49"
+      }
+    },
+    "owner": "niketarora"
   }
 }
