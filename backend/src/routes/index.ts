@@ -16,6 +16,12 @@ import { paymentsRoutes } from './payments.routes.js';
 import { notificationsRoutes } from './notifications.routes.js';
 import { grievancesRoutes } from './grievances.routes.js';
 import { analyticsRoutes } from './analytics.routes.js';
+import { intelligenceRoutes } from './intelligence.routes.js';
+import { predictionsRoutes } from './predictions.routes.js';
+import { recommendationsRoutes } from './recommendations.routes.js';
+import { entitiesRoutes } from './entities.routes.js';
+import { dataRoutes } from './data.routes.js';
+import { adminIntelligenceRoutes } from './admin.intelligence.routes.js';
 
 export const apiRouter = Router();
 
@@ -36,3 +42,11 @@ apiRouter.use('/payments', paymentsRoutes);
 apiRouter.use('/notifications', notificationsRoutes);
 apiRouter.use('/grievances', grievancesRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
+
+// Phase 3 Intelligence Endpoints
+apiRouter.use('/intelligence', intelligenceRoutes);
+apiRouter.use('/predictions', predictionsRoutes);
+apiRouter.use('/recommendations', recommendationsRoutes);
+apiRouter.use('/entities', entitiesRoutes);
+apiRouter.use('/data', dataRoutes);
+apiRouter.use('/admin/intelligence', adminIntelligenceRoutes);

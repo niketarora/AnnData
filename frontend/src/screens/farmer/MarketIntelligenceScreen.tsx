@@ -1,24 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, typography, spacing, radius, shadows } from '../../theme';
-import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { FarmerStackParamList } from '../../types';
+import { useIntelligence } from '../../features/intelligence/hooks/useIntelligence';
+import {
+  PredictionCard,
+  FreshnessBadge,
+  ConfidenceIndicator,
+  StaleDataBanner,
+  ExplainabilityDrawer,
+} from '../../features/intelligence/components';
+import { IntelligenceFormatters } from '../../features/intelligence/formatters/intelligenceFormatters';
 
 export const MarketIntelligenceScreen: React.FC = () => {
-  const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
-  const rec = state.recommendation;
+  const [showExplainer, setShowExplainer] = useState(false);
+
+  // Connect to live intelligence API for Wheat
+  const {
+    bundle,
+    viewState,
+    isStale,
+    isRefreshing,
+    refresh,
+  } = useIntelligence('crop', '55555555-5555-5555-5555-555555555501');
+
+  const rec = bundle?.recommendation;
+  const pred = bundle?.prediction;
+  const freshness = bundle?.freshness;
 
   return (
     <View style={styles.container}>
@@ -36,91 +57,115 @@ export const MarketIntelligenceScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Market Outlook Card */}
-        <View style={styles.outlookCard}>
-          <View style={styles.outlookHeader}>
-            <View style={styles.outlookTag}>
-              <Ionicons name="analytics" size={14} color={colors.primaryLight} />
-              <Text style={styles.outlookTagText}>MARKET OUTLOOK • WHEAT</Text>
-            </View>
-            <Text style={styles.updatedText}>Updated 10m ago</Text>
-          </View>
+        {/* Stale Warning Banner with manual refresh CTA */}
+        {isStale && (
+          <StaleDataBanner
+            observedAt={freshness?.last_observed_at}
+            onRefresh={refresh}
+            isRefreshing={isRefreshing}
+          />
+        )}
 
-          <View style={styles.priceRow}>
-            <View>
-              <Text style={styles.priceLabel}>Expected Price Range</Text>
-              <Text style={styles.priceRange}>{rec.marketPriceRange}</Text>
-            </View>
-            <View style={styles.trendCol}>
-              <View style={styles.trendPill}>
-                <Ionicons name="trending-up" size={15} color={colors.success} />
-                <Text style={styles.trendPillText}>↑ {rec.sevenDayTrendPercent}%</Text>
+        {/* Live / Refresh Status Strip */}
+        <View style={styles.topStatusStrip}>
+          <FreshnessBadge
+            status={freshness?.status || 'LIVE'}
+            observedAt={freshness?.last_observed_at}
+          />
+          <TouchableOpacity
+            style={styles.refreshControlBtn}
+            onPress={refresh}
+            disabled={isRefreshing}
+            activeOpacity={0.8}
+          >
+            {isRefreshing ? (
+              <ActivityIndicator size="small" color={colors.primaryLight} />
+            ) : (
+              <>
+                <Ionicons name="refresh" size={13} color={colors.primaryLight} />
+                <Text style={styles.refreshControlText}>Refresh Feed</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Dynamic OASSM-10 Price Prediction Card */}
+        <PredictionCard
+          prediction={pred || null}
+          cropName="Wheat (Sharbati)"
+          freshnessStatus={freshness?.status || 'LIVE'}
+          observedAt={freshness?.last_observed_at}
+        />
+
+        {/* Dynamic Decision Recommendation Card */}
+        {rec && (
+          <View style={styles.decisionCard}>
+            <View style={styles.decisionHeader}>
+              <View style={styles.decisionBadge}>
+                <Ionicons name="flash" size={14} color={colors.warning} />
+                <Text style={styles.decisionBadgeText}>RECOMMENDED ACTION</Text>
               </View>
-              <Text style={styles.trendSub}>7-day outlook</Text>
+              <ConfidenceIndicator confidence={rec.confidence} size="sm" />
             </View>
-          </View>
 
-          {/* Current vs Expected Comparison Strip */}
-          <View style={styles.compStrip}>
-            <View style={styles.compCol}>
-              <Text style={styles.compLabel}>Current APMC Baseline</Text>
-              <Text style={styles.compValue}>₹2,390 / QTL</Text>
+            <Text style={styles.actionTitle}>
+              {IntelligenceFormatters.formatActionTitle(rec.decision)}
+            </Text>
+            <Text style={styles.actionSubtitle}>
+              Optimal net realization strategy for 20 QTL Sharbati Wheat
+            </Text>
+
+            {/* Split Allocation Bars */}
+            {rec.sell_percent !== undefined && (
+              <View style={styles.splitBarContainer}>
+                <View style={[styles.splitSell, { width: `${rec.sell_percent}%` as `${number}%` }]}>
+                  <Text style={styles.splitBarText}>Sell {rec.sell_percent}% Now</Text>
+                </View>
+                <View style={[styles.splitHold, { width: `${rec.hold_percent ?? (100 - rec.sell_percent)}%` as `${number}%` }]}>
+                  <Text style={styles.splitBarText}>Hold {rec.hold_percent ?? (100 - rec.sell_percent)}%</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Decision Rationale */}
+            <View style={styles.rationaleContainer}>
+              <Text style={styles.rationaleTitle}>Decision Rationale</Text>
+              <Text style={styles.rationaleText}>{rec.reason}</Text>
+
+              {/* Dynamic Factors List */}
+              {rec.factors && rec.factors.length > 0 && (
+                <View style={styles.factorsList}>
+                  {rec.factors.slice(0, 3).map((f, i) => (
+                    <View key={f.id || i} style={styles.factorBullet}>
+                      <Ionicons
+                        name={f.impact === 'positive' ? 'checkmark-circle' : 'alert-circle'}
+                        size={15}
+                        color={f.impact === 'positive' ? colors.success : colors.warning}
+                      />
+                      <Text style={styles.bulletText}>
+                        <Text style={styles.factorNameBold}>{f.factor}: </Text>
+                        {f.value}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-            <View style={[styles.compCol, { alignItems: 'flex-end' }]}>
-              <Text style={styles.compLabel}>Target Realization</Text>
-              <Text style={[styles.compValue, { color: colors.success }]}>₹2,500 / QTL Net</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Dynamic Recommendation Card: PARTIAL SELL */}
-        <View style={styles.decisionCard}>
-          <View style={styles.decisionHeader}>
-            <View style={styles.decisionBadge}>
-              <Ionicons name="flash" size={15} color={colors.warning} />
-              <Text style={styles.decisionBadgeText}>RECOMMENDED ACTION</Text>
-            </View>
-            <Text style={styles.confidenceText}>High Algorithmic Confidence</Text>
-          </View>
-
-          <Text style={styles.actionTitle}>{rec.actionTitle}</Text>
-          <Text style={styles.actionSubtitle}>{rec.actionSubtitle}</Text>
-
-          {/* Split Bars */}
-          <View style={styles.splitBarContainer}>
-            <View style={[styles.splitSell, { width: `${rec.sellPercent || 40}%` }]}>
-              <Text style={styles.splitBarText}>Sell {rec.sellPercent}% Now</Text>
-            </View>
-            <View style={[styles.splitHold, { width: `${rec.holdPercent || 60}%` }]}>
-              <Text style={styles.splitBarText}>Hold {rec.holdPercent}%</Text>
-            </View>
-          </View>
-
-          {/* Rationale Breakdown */}
-          <View style={styles.rationaleContainer}>
-            <Text style={styles.rationaleTitle}>Decision Rationale</Text>
-            <Text style={styles.rationaleText}>{rec.rationale}</Text>
-
-            <View style={styles.factorBullet}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={styles.bulletText}>
-                Taraori Mandi queue clearance is ~25 min today (lowest delay among all regional yards).
+            {/* Explainer Trigger CTA */}
+            <TouchableOpacity
+              style={styles.explainerTrigger}
+              onPress={() => setShowExplainer(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="information-circle-outline" size={16} color={colors.primaryLight} />
+              <Text style={styles.explainerTriggerText}>
+                Why this recommendation? View Algorithmic Factors
               </Text>
-            </View>
-            <View style={styles.factorBullet}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={styles.bulletText}>
-                Buyer demand is robust with 500 Quintals open quota at premium rate.
-              </Text>
-            </View>
-            <View style={styles.factorBullet}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
-              <Text style={styles.bulletText}>
-                Holding 60% allows capitalizing on expected regional price hardening over the next 5 days.
-              </Text>
-            </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.primaryLight} />
+            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* CTA to compare best places to sell */}
         <PrimaryButton
@@ -129,6 +174,13 @@ export const MarketIntelligenceScreen: React.FC = () => {
           onPress={() => navigation.navigate('BestPlacesToSell')}
         />
       </ScrollView>
+
+      {/* Decision Explainability Drawer */}
+      <ExplainabilityDrawer
+        visible={showExplainer}
+        recommendation={rec || null}
+        onClose={() => setShowExplainer(false)}
+      />
     </View>
   );
 };
@@ -146,92 +198,25 @@ const styles = StyleSheet.create({
     gap: spacing.spaceMd,
     paddingBottom: 60,
   },
-  outlookCard: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: spacing.spaceMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.sm,
-    gap: spacing.spaceSm,
-  },
-  outlookHeader: {
+  topStatusStrip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 2,
   },
-  outlookTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.surfaceContainer,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  outlookTagText: {
-    ...typography.badgeLabel,
-    color: colors.primaryLight,
-  },
-  updatedText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.spaceXs,
-  },
-  priceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  priceRange: {
-    ...typography.headlineLg,
-    color: colors.textPrimary,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  trendCol: {
-    alignItems: 'flex-end',
-  },
-  trendPill: {
+  refreshControlBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.successTint,
+    backgroundColor: colors.surfaceContainer,
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.full,
   },
-  trendPillText: {
+  refreshControlText: {
     ...typography.captionBold,
-    color: colors.success,
-  },
-  trendSub: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  compStrip: {
-    flexDirection: 'row',
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: radius.md,
-    padding: spacing.spaceSm,
-    marginTop: spacing.spaceXs,
-  },
-  compCol: {
-    flex: 1,
-  },
-  compLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  compValue: {
-    ...typography.bodyBaseMedium,
-    color: colors.textPrimary,
-    marginTop: 2,
+    color: colors.primaryLight,
+    fontSize: 11,
   },
   decisionCard: {
     backgroundColor: colors.card,
@@ -259,10 +244,7 @@ const styles = StyleSheet.create({
   decisionBadgeText: {
     ...typography.badgeLabel,
     color: colors.warning,
-  },
-  confidenceText: {
-    ...typography.caption,
-    color: colors.textSecondary,
+    fontSize: 10,
   },
   actionTitle: {
     ...typography.headlineLg,
@@ -272,6 +254,7 @@ const styles = StyleSheet.create({
   actionSubtitle: {
     ...typography.bodyBaseMedium,
     color: colors.primaryDark,
+    fontSize: 13,
   },
   splitBarContainer: {
     flexDirection: 'row',
@@ -310,16 +293,41 @@ const styles = StyleSheet.create({
     ...typography.bodyBase,
     color: colors.textPrimary,
     lineHeight: 20,
+    fontSize: 13,
+  },
+  factorsList: {
+    gap: 6,
+    marginTop: 4,
   },
   factorBullet: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
   },
+  factorNameBold: {
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
   bulletText: {
     ...typography.caption,
     color: colors.textSecondary,
     flex: 1,
     lineHeight: 18,
+  },
+  explainerTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  explainerTriggerText: {
+    ...typography.captionBold,
+    color: colors.primaryLight,
+    flex: 1,
+    marginLeft: 6,
   },
 });

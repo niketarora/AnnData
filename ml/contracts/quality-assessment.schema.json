@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QualityAssessment",
+  "type": "object",
+  "required": [
+    "qualityScore",
+    "predictedGrade",
+    "confidence",
+    "moisturePercent",
+    "damagePercent",
+    "uniformityScore",
+    "foreignMatterPercent",
+    "modelVersion",
+    "generatedAt"
+  ],
+  "properties": {
+    "qualityScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "predictedGrade": {
+      "type": "string",
+      "enum": ["Grade A", "Grade B", "Grade C", "Rejection"]
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "moisturePercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "damagePercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "uniformityScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "foreignMatterPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

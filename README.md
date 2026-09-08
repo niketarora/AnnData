@@ -19,10 +19,11 @@ KrishiNetra 2.0 transforms post-harvest agricultural commerce through an integra
                        (Express 5 / Node.js 20+ ESM)
            ┌───────────────────────────┼───────────────────────────┐
            ▼                           ▼                           ▼
-[ Supabase PostgreSQL ]    [ ML Prediction Layer ]     [ In-Memory Store ]
-   - 22 Relational Tables     - OASSM-10 Transformer      - Zero-Dependency Dev
-   - Row-Level Security       - CatBoost Realization      - Deterministic Tests
-   - Atomic Stored Procs      - Computer Vision Grading   - Instant Boot
+[ Supabase PostgreSQL ]    [ Intelligence & ML Layer ] [ In-Memory Store ]
+   - 33 Relational Tables     - APMC Mandi Ingestion      - Zero-Dependency Dev
+   - Row-Level Security       - Rules Precedence Engine   - Deterministic Tests
+   - Atomic Stored Procs      - CatBoost / OASSM Adapters - Instant Boot
+   - Freshness Tracking       - True Net Realization      - Full Phase 3 DB Mode
 ```
 
 ---
@@ -33,20 +34,28 @@ KrishiNetra 2.0 transforms post-harvest agricultural commerce through an integra
 .
 ├── frontend/             # Mobile Client (Expo SDK 57, React Native 0.86, TypeScript)
 │   ├── src/              # 31 UI screens, reusable components, store & API client
-│   └── __tests__/        # Unit test suite (17 tests)
+│   │   ├── features/intelligence/ # Intelligence hooks, formatters, and types
+│   │   └── components/   # PredictionCard, FreshnessBadge, ConfidenceIndicator, StaleDataBanner, ExplainabilityDrawer
+│   └── __tests__/        # Unit test suite (22 tests across 5 suites)
 ├── backend/              # Enterprise Backend (Express 5, TypeScript ESM, Zod, Pino)
-│   ├── src/              # Controllers, services, repositories, middleware, events
-│   └── tests/            # Supertest API test suites (26 tests)
+│   ├── src/              # Controllers, services, repositories, middleware, events, rules, jobs
+│   │   ├── integrations/ # Market Data Providers & ML Providers (Mock + Real)
+│   │   ├── rules/        # Business Rules Precedence Engine (Eligibility, MSP Floor, Risk)
+│   │   ├── services/     # Intelligence, Scoring, Recommendation, Normalization, Freshness
+│   │   └── jobs/         # Background scheduler (Market sync, freshness, prediction & rec refresh)
+│   └── tests/            # Supertest API test suites (50 tests across 11 suites)
 ├── supabase/             # Database Layer
-│   ├── migrations/       # Schema (22 tables), RLS policies, atomic functions
+│   ├── migrations/       # Schema (33 tables), RLS policies, atomic functions
 │   └── seed.sql          # Development seed data
-├── ml/                   # Future Machine Learning Integrations
-│   ├── README.md         # ML pipeline architecture & mathematical formulations
-│   └── contracts/        # Typed TypeScript contracts & inference schemas
+├── ml/                   # Machine Learning Contracts & Service Adapters
+│   ├── contracts/        # JSON schemas: prediction-input, prediction-output, recommendation, quality
+│   └── client/           # Standalone TypeScript ML client
 ├── docs/                 # Documentation
 │   ├── PRD.md            # Product Requirements Document
 │   ├── TRD.md            # Technical Requirements Document
-│   └── PHASE2_NOTES.md   # Phase 2 Engineering Notes & API Specifications
+│   ├── ML_CONTRACT.md    # Machine Learning Contract & Schema Documentation
+│   ├── PHASE2_NOTES.md   # Phase 2 Engineering Notes & API Specifications
+│   └── PHASE3_NOTES.md   # Phase 3 Intelligence & Decision Engine Specifications
 ├── scripts/              # Developer Convenience Scripts
 │   ├── start-dev.bat     # Windows launcher (starts backend + Expo)
 │   ├── start-dev.sh      # Unix launcher
@@ -104,22 +113,22 @@ npm run start:frontend
 
 ## Verification & Testing
 
-KrishiNetra 2.0 features comprehensive test automation across both the mobile client and backend server:
+KrishiNetra 2.0 features comprehensive test automation across both the mobile client and backend server (Phase 1, Phase 2, and Phase 3):
 
 ```bash
-# Run all tests across frontend and backend (43/43 tests)
+# Run all tests across frontend and backend (72/72 tests pass)
 npm test
 
-# Run TypeScript typechecks across both frontend and backend
+# Run TypeScript typechecks across both frontend and backend (0 errors)
 npm run typecheck
 ```
 
 ### Individual Workspaces:
 ```bash
-# Backend tests (26 tests across 6 suites)
+# Backend tests (50 tests across 11 suites: Phase 2 + Phase 3 Intelligence Pipeline & ML Contracts)
 npm run test:backend
 
-# Frontend unit tests (17 tests across 4 suites)
+# Frontend unit tests (22 tests across 5 suites: Currency, Realization, Queue, Sync & Intelligence)
 npm run test:frontend
 ```
 
@@ -144,6 +153,8 @@ curl -H "Authorization: Bearer demo-farmer-token" http://localhost:4000/api/v1/f
 
 ## Key Backend REST APIs
 
+### 1. Operations & Logistics (Phase 2)
+
 | Group | Method | Endpoint | Description |
 | :--- | :--- | :--- | :--- |
 | **Health** | `GET` | `/health` | System health, version, and environment |
@@ -163,6 +174,22 @@ curl -H "Authorization: Bearer demo-farmer-token" http://localhost:4000/api/v1/f
 | **Payments**| `POST` | `/api/v1/payments/release/:id` | Buyer releases DBT escrow payout |
 | **Receipts**| `GET` | `/api/v1/transactions/:id/receipt` | Authoritative J-Form receipt |
 | **Disputes**| `POST` | `/api/v1/grievances` | Farmer disputes grading or scale reading |
+
+### 2. Intelligence & Decision Engine (Phase 3)
+
+| Group | Method | Endpoint | Description |
+| :--- | :--- | :--- | :--- |
+| **Intelligence** | `GET` | `/api/v1/intelligence/:entityType/:entityId` | Bundled prediction, recommendation, and factors |
+| **Intelligence** | `POST` | `/api/v1/intelligence/:entityType/:entityId/refresh` | Force synchronous refresh and cache bust |
+| **Predictions** | `GET` | `/api/v1/predictions/latest/:entityType/:entityId` | Latest cached price prediction |
+| **Predictions** | `POST` | `/api/v1/predictions` | Request on-demand prediction with input features |
+| **Recommendations**| `GET` | `/api/v1/recommendations/:entityType/:entityId` | Actionable recommendation (SELL_NOW/HOLD/DIVERSIFY) |
+| **Recommendations**| `POST` | `/api/v1/recommendations/evaluate` | Dynamic recommendation with what/why factors |
+| **Market Data** | `GET` | `/api/v1/data/sources` | External data sources status & latency |
+| **Freshness** | `GET` | `/api/v1/data/freshness` | Data freshness tracking table (LIVE/RECENT/STALE) |
+| **Diagnostics** | `GET` | `/health/intelligence` | Subsystem health (DB, External Data, ML, Cache) |
+| **Admin** | `POST` | `/api/v1/admin/intelligence/sync` | Manual external data ingestion trigger (Operator only) |
+| **Admin** | `GET` | `/api/v1/admin/intelligence/diagnostics` | Complete ML & Provider health diagnostics |
 
 ---
 

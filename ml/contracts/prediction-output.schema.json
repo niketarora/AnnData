@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PricePredictionOutput",
+  "type": "object",
+  "required": [
+    "predictedPrice1d",
+    "predictedPrice3d",
+    "predictedPrice7d",
+    "confidence",
+    "modelVersion",
+    "generatedAt"
+  ],
+  "properties": {
+    "predictedPrice1d": {
+      "type": "number",
+      "minimum": 0
+    },
+    "predictedPrice3d": {
+      "type": "number",
+      "minimum": 0
+    },
+    "predictedPrice7d": {
+      "type": "number",
+      "minimum": 0
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "predictionInterval": {
+      "type": "object",
+      "properties": {
+        "lowerBound": { "type": "number" },
+        "upperBound": { "type": "number" }
+      },
+      "required": ["lowerBound", "upperBound"],
+      "additionalProperties": false
+    },
+    "modelVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

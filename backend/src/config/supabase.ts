@@ -3,7 +3,9 @@ import { env } from './env.js';
 import { logger } from './logger.js';
 
 export const isSupabaseConfigured =
-  !env.SUPABASE_URL.includes('mock.supabase.co') && env.NODE_ENV !== 'test';
+  env.SUPABASE_ENABLED &&
+  !env.SUPABASE_URL.includes('mock.supabase.co') &&
+  env.NODE_ENV !== 'test';
 
 // Service role client - ONLY for backend administrative tasks
 export const supabaseService: SupabaseClient = createClient(

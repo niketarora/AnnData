@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SellingRecommendation",
+  "type": "object",
+  "required": [
+    "primaryAction",
+    "score",
+    "reason",
+    "factors",
+    "rankedMarkets",
+    "modelVersion",
+    "generatedAt",
+    "expiresAt"
+  ],
+  "properties": {
+    "primaryAction": {
+      "type": "string",
+      "enum": ["SELL_NOW", "WAIT", "PARTIAL_SELL"]
+    },
+    "sellPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "holdPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 5
+    },
+    "factors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["factor", "value", "weight", "impact", "direction"],
+        "properties": {
+          "factor": { "type": "string" },
+          "value": { "type": "string" },
+          "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "impact": { "type": "string", "enum": ["positive", "negative", "neutral"] },
+          "direction": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rankedMarkets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "marketId",
+          "grossRevenue",
+          "estimatedTransportCost",
+          "estimatedNetRealization",
+          "recommendationScore",
+          "rank",
+          "explanation"
+        ],
+        "properties": {
+          "marketId": { "type": "string" },
+          "grossRevenue": { "type": "number", "minimum": 0 },
+          "estimatedTransportCost": { "type": "number", "minimum": 0 },
+          "estimatedNetRealization": { "type": "number" },
+          "recommendationScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "rank": { "type": "integer", "minimum": 1 },
+          "explanation": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "modelVersion": {
+      "type": "string"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

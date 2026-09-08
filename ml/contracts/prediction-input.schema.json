@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PricePredictionInput",
+  "type": "object",
+  "required": [
+    "crop",
+    "variety",
+    "state",
+    "district",
+    "marketCode",
+    "historicalModalPrice"
+  ],
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "string",
+      "minLength": 2
+    },
+    "district": {
+      "type": "string",
+      "minLength": 2
+    },
+    "marketCode": {
+      "type": "string",
+      "minLength": 2
+    },
+    "crop": {
+      "type": "string",
+      "minLength": 2
+    },
+    "variety": {
+      "type": "string",
+      "minLength": 2
+    },
+    "historicalModalPrice": {
+      "type": "number",
+      "minimum": 0
+    },
+    "arrivalsQuintals": {
+      "type": "number",
+      "minimum": 0
+    },
+    "temperatureCelsius": {
+      "type": "number"
+    },
+    "rainfallMm": {
+      "type": "number",
+      "minimum": 0
+    },
+    "humidityPercent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "msp": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}

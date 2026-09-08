@@ -9,3 +9,4 @@ class AppEventEmitter extends EventEmitter {
 }
 
 export const appEvents = new AppEventEmitter();
+export const eventBus = appEvents;

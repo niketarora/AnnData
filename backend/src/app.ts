@@ -31,7 +31,7 @@ export function createApp(): Express {
     next();
   });
 
-  // Health Check Endpoint
+  // Health Check Endpoints
   app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'UP',
@@ -40,6 +40,37 @@ export function createApp(): Express {
       environment: env.NODE_ENV,
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // Section 50: Intelligence Subsystem Health Check
+  app.get('/health/intelligence', async (_req, res) => {
+    try {
+      const { runProviderHealthJob } = await import('./jobs/providerHealth.job.js');
+      const healthReport = await runProviderHealthJob();
+      
+      const isDegraded =
+        healthReport.marketProvider.status !== 'healthy' ||
+        healthReport.mlProvider.status !== 'healthy';
+
+      res.status(isDegraded ? 207 : 200).json({
+        status: isDegraded ? 'DEGRADED' : 'HEALTHY',
+        database: 'healthy',
+        external_data: healthReport.marketProvider.status,
+        ml: healthReport.mlProvider.status,
+        cache: 'healthy',
+        details: healthReport,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      res.status(503).json({
+        status: 'UNAVAILABLE',
+        database: 'healthy',
+        external_data: 'unavailable',
+        ml: 'unavailable',
+        cache: 'healthy',
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // Mount API Router under /api/v1

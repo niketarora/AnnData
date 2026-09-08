@@ -17,6 +17,19 @@ import {
   AppNotification,
   Grievance,
 } from '../types/index.js';
+import {
+  DataSource,
+  DataIngestionRun,
+  ExternalDataRecord,
+  DataFreshness,
+  ModelRegistryEntry,
+  PredictionRun,
+  PredictionInputSnapshot,
+  Prediction,
+  Recommendation,
+  RecommendationFactor,
+  DecisionEvent,
+} from '../types/intelligence.types.js';
 
 export class MemoryDbStore {
   public profiles: Profile[] = [
@@ -271,6 +284,129 @@ export class MemoryDbStore {
     metadata: Record<string, unknown>;
     timestamp: string;
   }> = [];
+
+  // ==========================================
+  // Phase 3 Intelligence Collections
+  // ==========================================
+  public dataSources: DataSource[] = [
+    {
+      id: 'src-01',
+      name: 'Agmarknet Haryana APMC Wholesale Price Feed',
+      type: 'mandi_prices',
+      base_url: 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070',
+      active: true,
+      refresh_interval_seconds: 900,
+      last_success_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'src-02',
+      name: 'Open-Meteo Agro-Meteorological Weather Feed',
+      type: 'weather',
+      base_url: 'https://api.open-meteo.com/v1/forecast',
+      active: true,
+      refresh_interval_seconds: 1800,
+      last_success_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'src-03',
+      name: 'Government Minimum Support Price (MSP) Gazette Floor',
+      type: 'msp',
+      base_url: 'https://agricoop.gov.in/msp',
+      active: true,
+      refresh_interval_seconds: 86400,
+      last_success_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
+  public dataIngestionRuns: DataIngestionRun[] = [
+    {
+      id: 'ingest-01',
+      source_id: 'src-01',
+      started_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+      completed_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      status: 'SUCCESS',
+      records_received: 24,
+      records_inserted: 18,
+      records_updated: 6,
+      records_rejected: 0,
+      created_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  public externalDataRecords: ExternalDataRecord[] = [];
+
+  public dataFreshness: DataFreshness[] = [
+    {
+      id: 'fresh-01',
+      entity_type: 'crop',
+      entity_id: '55555555-5555-5555-5555-555555555501', // Wheat
+      status: 'LIVE',
+      last_observed_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      last_synced_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
+      source_id: 'src-01',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'fresh-02',
+      entity_type: 'market',
+      entity_id: '33333333-3333-3333-3333-333333333301', // Taraori
+      status: 'LIVE',
+      last_observed_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      last_synced_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + 55 * 60 * 1000).toISOString(),
+      source_id: 'src-01',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
+  public modelRegistry: ModelRegistryEntry[] = [
+    {
+      id: 'mod-01',
+      model_name: 'OASSM-10-PriceTransformer',
+      version: '1.2.0',
+      provider: 'OASSM-10',
+      input_schema_version: '1.0.0',
+      output_schema_version: '1.0.0',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'mod-02',
+      model_name: 'CatBoost-SellingDecisionEngine',
+      version: '2.1.0',
+      provider: 'CatBoost',
+      input_schema_version: '1.0.0',
+      output_schema_version: '1.0.0',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: 'mod-03',
+      model_name: 'Vision-GrainQualityClassifier',
+      version: '1.0.4',
+      provider: 'VisionClassifier',
+      input_schema_version: '1.0.0',
+      output_schema_version: '1.0.0',
+      status: 'ACTIVE',
+      created_at: new Date().toISOString(),
+    },
+  ];
+
+  public predictionRuns: PredictionRun[] = [];
+  public predictionInputSnapshots: PredictionInputSnapshot[] = [];
+  public predictions: Prediction[] = [];
+  public recommendations: Recommendation[] = [];
+  public recommendationFactors: RecommendationFactor[] = [];
+  public decisionEvents: DecisionEvent[] = [];
 }
 
 export const memoryDb = new MemoryDbStore();

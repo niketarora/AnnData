@@ -24,7 +24,7 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
 
   try {
     // 1. Development & Demo token support
-    if (token === 'farmer-demo-token' || token === 'mock-farmer-jwt') {
+    if (token === 'farmer-demo-token' || token === 'mock-farmer-jwt' || token === 'demo-farmer-token') {
       req.user = {
         userId: '11111111-1111-1111-1111-111111111111',
         profileId: '00000000-0000-0000-0000-000000000001',
@@ -35,12 +35,22 @@ export async function requireAuth(req: Request, _res: Response, next: NextFuncti
       return next();
     }
 
-    if (token === 'buyer-demo-token' || token === 'mock-buyer-jwt') {
+    if (token === 'buyer-demo-token' || token === 'mock-buyer-jwt' || token === 'demo-buyer-token') {
       req.user = {
         userId: '22222222-2222-2222-2222-222222222222',
         profileId: '00000000-0000-0000-0000-000000000002',
         role: 'buyer',
         buyerId: 'b0000000-0000-0000-0000-000000000001',
+        token,
+      };
+      return next();
+    }
+
+    if (token === 'operator-demo-token' || token === 'demo-operator-token') {
+      req.user = {
+        userId: '33333333-3333-3333-3333-333333333333',
+        profileId: '00000000-0000-0000-0000-000000000003',
+        role: 'operator',
         token,
       };
       return next();

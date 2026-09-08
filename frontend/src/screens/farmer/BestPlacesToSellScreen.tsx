@@ -14,12 +14,18 @@ import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { ConfirmationModal } from '../../components/feedback/ConfirmationModal';
 import { FarmerStackParamList, Market } from '../../types';
+import { useIntelligence } from '../../features/intelligence/hooks/useIntelligence';
+import { ExplainabilityDrawer, FreshnessBadge } from '../../features/intelligence/components';
 
 export const BestPlacesToSellScreen: React.FC = () => {
   const [state] = useAppStore();
   const navigation = useNavigation<NativeStackNavigationProp<FarmerStackParamList>>();
   const [sortMode, setSortMode] = useState<'net' | 'distance' | 'waiting'>('net');
   const [breakdownModalMarket, setBreakdownModalMarket] = useState<Market | null>(null);
+  const [showExplainer, setShowExplainer] = useState(false);
+
+  // Connect to live intelligence for Wheat lot
+  const { bundle } = useIntelligence('crop', '55555555-5555-5555-5555-555555555501');
 
   const sortedMarkets = [...state.markets].sort((a, b) => {
     if (sortMode === 'distance') return a.distanceKm - b.distanceKm;
@@ -63,18 +69,23 @@ export const BestPlacesToSellScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Educational Explainer Banner */}
-        <View style={styles.explainerBanner}>
+        {/* Educational Explainer Banner with Algorithmic Explainability Link */}
+        <TouchableOpacity
+          style={styles.explainerBanner}
+          onPress={() => setShowExplainer(true)}
+          activeOpacity={0.88}
+        >
           <View style={styles.explainerIconCircle}>
             <Ionicons name="bulb-outline" size={20} color={colors.info} />
           </View>
           <View style={styles.explainerTextContainer}>
             <Text style={styles.explainerTitle}>Why Net Realization?</Text>
             <Text style={styles.explainerBody}>
-              We calculate gross crop value minus transport distance and queue waiting loss to find your real take-home earnings.
+              We calculate gross crop value minus transport distance and queue waiting loss to find your real take-home earnings. Tap to view AI factor breakdown.
             </Text>
           </View>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.info} />
+        </TouchableOpacity>
 
         {/* Filter & Sort Chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortChipsRow}>
@@ -371,6 +382,13 @@ export const BestPlacesToSellScreen: React.FC = () => {
           onCancel={() => setBreakdownModalMarket(null)}
         />
       )}
+
+      {/* Decision Explainability Drawer */}
+      <ExplainabilityDrawer
+        visible={showExplainer}
+        recommendation={bundle?.recommendation || null}
+        onClose={() => setShowExplainer(false)}
+      />
     </View>
   );
 };
