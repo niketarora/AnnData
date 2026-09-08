@@ -1,5 +1,5 @@
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class AuditLogsRepository {
   async log(
@@ -19,10 +19,12 @@ export class AuditLogsRepository {
       timestamp: new Date().toISOString(),
     };
 
-    try {
-      await supabaseService.from('audit_logs').insert(entry);
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService.from('audit_logs').insert(entry);
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.auditLogs.unshift(entry);

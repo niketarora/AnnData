@@ -15,7 +15,7 @@ import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { FarmerStackParamList } from '../../types';
-import { bookingMockService } from '../../services';
+import { bookingService } from '../../services';
 
 export const BookSlotScreen: React.FC = () => {
   const [state] = useAppStore();
@@ -42,7 +42,7 @@ export const BookSlotScreen: React.FC = () => {
   const handleConfirmBooking = async () => {
     setLoading(true);
     try {
-      const booking = await bookingMockService.createBooking(
+      const booking = await bookingService.createBooking(
         state.activeLotId,
         market.id,
         selectedSlotId,

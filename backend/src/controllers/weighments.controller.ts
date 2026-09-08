@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { weighmentsService } from '../services/weighments.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class WeighmentsController {
   async getByBookingId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const weighment = await weighmentsService.getWeighmentByBooking(req.params.bookingId);
+      const weighment = await weighmentsService.getWeighmentByBooking(getParam(req, 'bookingId'));
       sendSuccess(res, weighment);
     } catch (err) {
       next(err);

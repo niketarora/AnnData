@@ -1,27 +1,31 @@
 import { Grievance } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class GrievancesRepository {
   async findAll(userId?: string): Promise<Grievance[]> {
-    try {
-      let query = supabaseService.from('grievances').select('*');
-      if (userId) query = query.eq('user_id', userId);
-      const { data, error } = await query;
-      if (!error && data) return data as Grievance[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseService.from('grievances').select('*');
+        if (userId) query = query.eq('user_id', userId);
+        const { data, error } = await query;
+        if (!error && data) return data as Grievance[];
+      } catch {
+        // Fallback
+      }
     }
 
     return memoryDb.grievances.filter((g) => (!userId ? true : g.user_id === userId));
   }
 
   async findById(id: string): Promise<Grievance | null> {
-    try {
-      const { data, error } = await supabaseService.from('grievances').select('*').eq('id', id).single();
-      if (!error && data) return data as Grievance;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('grievances').select('*').eq('id', id).single();
+        if (!error && data) return data as Grievance;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.grievances.find((g) => g.id === id) || null;
   }
@@ -33,11 +37,13 @@ export class GrievancesRepository {
       created_at: new Date().toISOString(),
     };
 
-    try {
-      const { data, error } = await supabaseService.from('grievances').insert(newGrievance).select().single();
-      if (!error && data) return data as Grievance;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('grievances').insert(newGrievance).select().single();
+        if (!error && data) return data as Grievance;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.grievances.unshift(newGrievance);
@@ -45,16 +51,18 @@ export class GrievancesRepository {
   }
 
   async update(id: string, updates: Partial<Grievance>): Promise<Grievance | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('grievances')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as Grievance;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('grievances')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data as Grievance;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.grievances.find((g) => g.id === id);

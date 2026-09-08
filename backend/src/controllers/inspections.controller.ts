@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { inspectionsService } from '../services/inspections.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class InspectionsController {
   async getByBookingId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const inspection = await inspectionsService.getInspectionByBooking(req.params.bookingId);
+      const inspection = await inspectionsService.getInspectionByBooking(getParam(req, 'bookingId'));
       sendSuccess(res, inspection);
     } catch (err) {
       next(err);

@@ -16,7 +16,7 @@ import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { FarmerStackParamList, CropType } from '../../types';
-import { farmerMockService } from '../../services';
+import { cropService } from '../../services';
 
 export const CreateCropLotScreen: React.FC = () => {
   const [state] = useAppStore();
@@ -38,7 +38,7 @@ export const CreateCropLotScreen: React.FC = () => {
   const handleCreateLot = async () => {
     setLoading(true);
     try {
-      const newLot = await farmerMockService.createCropLot({
+      const newLot = await cropService.createCropLot({
         farmerId: state.farmer.id,
         farmerName: state.farmer.name,
         crop,

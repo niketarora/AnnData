@@ -2,6 +2,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { env } from './env.js';
 import { logger } from './logger.js';
 
+export const isSupabaseConfigured =
+  !env.SUPABASE_URL.includes('mock.supabase.co') && env.NODE_ENV !== 'test';
+
 // Service role client - ONLY for backend administrative tasks
 export const supabaseService: SupabaseClient = createClient(
   env.SUPABASE_URL,
@@ -29,4 +32,8 @@ export function createScopedClient(accessToken: string): SupabaseClient {
   });
 }
 
-logger.info({ url: env.SUPABASE_URL }, 'Supabase client initialized');
+if (isSupabaseConfigured) {
+  logger.info({ url: env.SUPABASE_URL }, 'Supabase cloud client active');
+} else {
+  logger.info('Running in local/test database store mode');
+}

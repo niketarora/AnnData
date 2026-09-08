@@ -1,17 +1,19 @@
 import { CropLot, LotImage } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class LotsRepository {
   async findAll(filters?: { farmerId?: string; status?: string }): Promise<CropLot[]> {
-    try {
-      let query = supabaseService.from('crop_lots').select('*');
-      if (filters?.farmerId) query = query.eq('farmer_id', filters.farmerId);
-      if (filters?.status) query = query.eq('status', filters.status);
-      const { data, error } = await query;
-      if (!error && data) return data as CropLot[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseService.from('crop_lots').select('*');
+        if (filters?.farmerId) query = query.eq('farmer_id', filters.farmerId);
+        if (filters?.status) query = query.eq('status', filters.status);
+        const { data, error } = await query;
+        if (!error && data) return data as CropLot[];
+      } catch {
+        // Fallback
+      }
     }
 
     return memoryDb.cropLots.filter((lot) => {
@@ -22,11 +24,13 @@ export class LotsRepository {
   }
 
   async findById(id: string): Promise<CropLot | null> {
-    try {
-      const { data, error } = await supabaseService.from('crop_lots').select('*').eq('id', id).single();
-      if (!error && data) return data as CropLot;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('crop_lots').select('*').eq('id', id).single();
+        if (!error && data) return data as CropLot;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.cropLots.find((l) => l.id === id) || null;
   }
@@ -41,11 +45,13 @@ export class LotsRepository {
       updated_at: now,
     };
 
-    try {
-      const { data, error } = await supabaseService.from('crop_lots').insert(newLot).select().single();
-      if (!error && data) return data as CropLot;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('crop_lots').insert(newLot).select().single();
+        if (!error && data) return data as CropLot;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.cropLots.unshift(newLot);
@@ -53,16 +59,18 @@ export class LotsRepository {
   }
 
   async update(id: string, updates: Partial<CropLot>): Promise<CropLot | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('crop_lots')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as CropLot;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('crop_lots')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data as CropLot;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.cropLots.find((l) => l.id === id);
@@ -80,11 +88,13 @@ export class LotsRepository {
       created_at: new Date().toISOString(),
     }));
 
-    try {
-      const { data, error } = await supabaseService.from('lot_images').insert(newImages).select();
-      if (!error && data) return data as LotImage[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('lot_images').insert(newImages).select();
+        if (!error && data) return data as LotImage[];
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.lotImages.push(...newImages);
@@ -92,11 +102,13 @@ export class LotsRepository {
   }
 
   async getImagesByLotId(lotId: string): Promise<LotImage[]> {
-    try {
-      const { data, error } = await supabaseService.from('lot_images').select('*').eq('lot_id', lotId);
-      if (!error && data) return data as LotImage[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('lot_images').select('*').eq('lot_id', lotId);
+        if (!error && data) return data as LotImage[];
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.lotImages.filter((img) => img.lot_id === lotId);
   }

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { transactionsService } from '../services/transactions.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class TransactionsController {
   async getTransactions(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -22,7 +23,7 @@ export class TransactionsController {
     try {
       if (!req.user) throw new UnauthorizedError();
       const txn = await transactionsService.getTransactionById(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.role,
         req.user.farmerId,
         req.user.buyerId
@@ -35,7 +36,7 @@ export class TransactionsController {
 
   async getReceipt(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const receipt = await transactionsService.getReceipt(req.params.id);
+      const receipt = await transactionsService.getReceipt(getParam(req, 'id'));
       sendSuccess(res, receipt);
     } catch (err) {
       next(err);

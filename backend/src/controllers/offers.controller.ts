@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { offersService } from '../services/offers.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class OffersController {
   async getByBookingId(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const offer = await offersService.getOfferByBooking(req.params.bookingId);
+      const offer = await offersService.getOfferByBooking(getParam(req, 'bookingId'));
       sendSuccess(res, offer);
     } catch (err) {
       next(err);
@@ -15,7 +16,7 @@ export class OffersController {
 
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const offer = await offersService.getOfferById(req.params.id);
+      const offer = await offersService.getOfferById(getParam(req, 'id'));
       sendSuccess(res, offer);
     } catch (err) {
       next(err);
@@ -35,7 +36,7 @@ export class OffersController {
   async acceptOffer(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user || !req.user.farmerId) throw new UnauthorizedError();
-      const result = await offersService.acceptOffer(req.params.id, req.user.farmerId);
+      const result = await offersService.acceptOffer(getParam(req, 'id'), req.user.farmerId);
       sendSuccess(res, result, 'Offer accepted. Transaction created in payment pending state.');
     } catch (err) {
       next(err);
@@ -46,7 +47,7 @@ export class OffersController {
     try {
       if (!req.user || !req.user.farmerId) throw new UnauthorizedError();
       const { reason } = req.body;
-      const offer = await offersService.rejectOffer(req.params.id, req.user.farmerId, reason);
+      const offer = await offersService.rejectOffer(getParam(req, 'id'), req.user.farmerId, reason);
       sendSuccess(res, offer, 'Offer rejected successfully');
     } catch (err) {
       next(err);

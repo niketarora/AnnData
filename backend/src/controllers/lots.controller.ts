@@ -4,6 +4,7 @@ import { recommendationService } from '../services/recommendations.service.js';
 import { buyerMatchingService } from '../services/buyerMatching.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class LotsController {
   async getFarmerLots(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -29,7 +30,7 @@ export class LotsController {
   async getLotById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) throw new UnauthorizedError();
-      const lot = await lotsService.getLotById(req.params.id, req.user.role, req.user.farmerId);
+      const lot = await lotsService.getLotById(getParam(req, 'id'), req.user.role, req.user.farmerId);
       sendSuccess(res, lot);
     } catch (err) {
       next(err);
@@ -50,7 +51,7 @@ export class LotsController {
     try {
       if (!req.user) throw new UnauthorizedError();
       const updated = await lotsService.updateLot(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.farmerId || '',
         req.body,
         req.user.role === 'buyer' || req.user.role === 'operator'
@@ -64,7 +65,7 @@ export class LotsController {
   async addLotImages(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user || !req.user.farmerId) throw new UnauthorizedError();
-      const images = await lotsService.addLotImages(req.params.id, req.user.farmerId, req.body.images);
+      const images = await lotsService.addLotImages(getParam(req, 'id'), req.user.farmerId, req.body.images);
       sendSuccess(res, images, 'Lot images uploaded successfully', 201);
     } catch (err) {
       next(err);
@@ -73,7 +74,7 @@ export class LotsController {
 
   async getRecommendations(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const recommendations = await recommendationService.getRecommendationsForLot(req.params.id);
+      const recommendations = await recommendationService.getRecommendationsForLot(getParam(req, 'id'));
       sendSuccess(res, recommendations);
     } catch (err) {
       next(err);
@@ -82,7 +83,7 @@ export class LotsController {
 
   async getMatchedBuyers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const matched = await buyerMatchingService.matchBuyersForLot(req.params.id);
+      const matched = await buyerMatchingService.matchBuyersForLot(getParam(req, 'id'));
       sendSuccess(res, matched);
     } catch (err) {
       next(err);

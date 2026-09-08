@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { marketsService } from '../services/markets.service.js';
 import { weatherService } from '../integrations/weather.service.js';
 import { sendSuccess } from '../utils/response.js';
+import { getParam } from '../utils/params.js';
 
 export class MarketsController {
   async getAllMarkets(_req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -15,7 +16,7 @@ export class MarketsController {
 
   async getMarketById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const market = await marketsService.getMarketById(req.params.id);
+      const market = await marketsService.getMarketById(getParam(req, 'id'));
       sendSuccess(res, market);
     } catch (err) {
       next(err);
@@ -24,7 +25,7 @@ export class MarketsController {
 
   async getMarketWeather(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const weather = await weatherService.getWeatherForMarket(req.params.id);
+      const weather = await weatherService.getWeatherForMarket(getParam(req, 'id'));
       sendSuccess(res, weather);
     } catch (err) {
       next(err);

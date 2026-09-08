@@ -1,18 +1,20 @@
 import { Payment } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class PaymentsRepository {
   async findByTransactionId(transactionId: string): Promise<Payment | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('payments')
-        .select('*')
-        .eq('transaction_id', transactionId)
-        .single();
-      if (!error && data) return data as Payment;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('payments')
+          .select('*')
+          .eq('transaction_id', transactionId)
+          .single();
+        if (!error && data) return data as Payment;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.payments.find((p) => p.transaction_id === transactionId) || null;
   }
@@ -24,11 +26,13 @@ export class PaymentsRepository {
       created_at: new Date().toISOString(),
     };
 
-    try {
-      const { data, error } = await supabaseService.from('payments').insert(newPayment).select().single();
-      if (!error && data) return data as Payment;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('payments').insert(newPayment).select().single();
+        if (!error && data) return data as Payment;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.payments.push(newPayment);
@@ -36,20 +40,22 @@ export class PaymentsRepository {
   }
 
   async updateStatus(transactionId: string, status: Payment['status'], ref?: string): Promise<Payment | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('payments')
-        .update({
-          status,
-          provider_reference: ref,
-          completed_at: status === 'PAID' ? new Date().toISOString() : undefined,
-        })
-        .eq('transaction_id', transactionId)
-        .select()
-        .single();
-      if (!error && data) return data as Payment;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('payments')
+          .update({
+            status,
+            provider_reference: ref,
+            completed_at: status === 'PAID' ? new Date().toISOString() : undefined,
+          })
+          .eq('transaction_id', transactionId)
+          .select()
+          .single();
+        if (!error && data) return data as Payment;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.payments.find((p) => p.transaction_id === transactionId);

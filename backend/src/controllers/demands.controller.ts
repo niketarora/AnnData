@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { demandsService } from '../services/demands.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class DemandsController {
   async getAllDemands(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -29,7 +30,7 @@ export class DemandsController {
 
   async getDemandById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const demand = await demandsService.getDemandById(req.params.id);
+      const demand = await demandsService.getDemandById(getParam(req, 'id'));
       sendSuccess(res, demand);
     } catch (err) {
       next(err);
@@ -50,7 +51,7 @@ export class DemandsController {
     try {
       if (!req.user || !req.user.buyerId) throw new UnauthorizedError();
       const updated = await demandsService.updateDemand(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.buyerId,
         req.body,
         req.user.role === 'operator'
@@ -64,7 +65,7 @@ export class DemandsController {
   async deleteDemand(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user || !req.user.buyerId) throw new UnauthorizedError();
-      await demandsService.deleteDemand(req.params.id, req.user.buyerId, req.user.role === 'operator');
+      await demandsService.deleteDemand(getParam(req, 'id'), req.user.buyerId, req.user.role === 'operator');
       sendSuccess(res, { deleted: true }, 'Buyer demand deleted successfully');
     } catch (err) {
       next(err);

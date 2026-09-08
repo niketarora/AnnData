@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { notificationsService } from '../services/notifications.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class NotificationsController {
   async getNotifications(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -17,7 +18,7 @@ export class NotificationsController {
   async markAsRead(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user) throw new UnauthorizedError();
-      await notificationsService.markAsRead(req.params.id, req.user.profileId);
+      await notificationsService.markAsRead(getParam(req, 'id'), req.user.profileId);
       sendSuccess(res, { success: true }, 'Notification marked as read');
     } catch (err) {
       next(err);

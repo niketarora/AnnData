@@ -1,17 +1,19 @@
 import { Transaction } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class TransactionsRepository {
   async findAll(filters?: { farmerId?: string; buyerId?: string }): Promise<Transaction[]> {
-    try {
-      let query = supabaseService.from('transactions').select('*');
-      if (filters?.farmerId) query = query.eq('farmer_id', filters.farmerId);
-      if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
-      const { data, error } = await query;
-      if (!error && data) return data as Transaction[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseService.from('transactions').select('*');
+        if (filters?.farmerId) query = query.eq('farmer_id', filters.farmerId);
+        if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
+        const { data, error } = await query;
+        if (!error && data) return data as Transaction[];
+      } catch {
+        // Fallback
+      }
     }
 
     return memoryDb.transactions.filter((t) => {
@@ -22,25 +24,29 @@ export class TransactionsRepository {
   }
 
   async findById(id: string): Promise<Transaction | null> {
-    try {
-      const { data, error } = await supabaseService.from('transactions').select('*').eq('id', id).single();
-      if (!error && data) return data as Transaction;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('transactions').select('*').eq('id', id).single();
+        if (!error && data) return data as Transaction;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.transactions.find((t) => t.id === id) || null;
   }
 
   async findByBookingId(bookingId: string): Promise<Transaction | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('transactions')
-        .select('*')
-        .eq('booking_id', bookingId)
-        .single();
-      if (!error && data) return data as Transaction;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('transactions')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .single();
+        if (!error && data) return data as Transaction;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.transactions.find((t) => t.booking_id === bookingId) || null;
   }
@@ -55,11 +61,13 @@ export class TransactionsRepository {
       updated_at: now,
     };
 
-    try {
-      const { data, error } = await supabaseService.from('transactions').insert(newTransaction).select().single();
-      if (!error && data) return data as Transaction;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('transactions').insert(newTransaction).select().single();
+        if (!error && data) return data as Transaction;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.transactions.unshift(newTransaction);
@@ -67,20 +75,22 @@ export class TransactionsRepository {
   }
 
   async updatePaymentStatus(id: string, paymentStatus: Transaction['payment_status'], paymentRef?: string): Promise<Transaction | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('transactions')
-        .update({
-          payment_status: paymentStatus,
-          payment_reference: paymentRef,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as Transaction;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('transactions')
+          .update({
+            payment_status: paymentStatus,
+            payment_reference: paymentRef,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data as Transaction;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.transactions.find((t) => t.id === id);

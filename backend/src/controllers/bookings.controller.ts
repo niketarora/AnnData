@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { bookingsService } from '../services/bookings.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class BookingsController {
   async getFarmerBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -28,7 +29,7 @@ export class BookingsController {
     try {
       if (!req.user) throw new UnauthorizedError();
       const booking = await bookingsService.getBookingById(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.role,
         req.user.farmerId,
         req.user.buyerId
@@ -54,7 +55,7 @@ export class BookingsController {
       if (!req.user || !req.user.buyerId) throw new UnauthorizedError();
       const { slot_start, slot_end, market_code } = req.body;
       const booking = await bookingsService.acceptBookingAndAssignSlot(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.buyerId,
         slot_start,
         slot_end,
@@ -70,7 +71,7 @@ export class BookingsController {
     try {
       if (!req.user || !req.user.buyerId) throw new UnauthorizedError();
       const { reason } = req.body;
-      const booking = await bookingsService.rejectBooking(req.params.id, req.user.buyerId, reason || 'Rejected by buyer');
+      const booking = await bookingsService.rejectBooking(getParam(req, 'id'), req.user.buyerId, reason || 'Rejected by buyer');
       sendSuccess(res, booking, 'Booking rejected successfully');
     } catch (err) {
       next(err);
@@ -82,7 +83,7 @@ export class BookingsController {
       if (!req.user) throw new UnauthorizedError();
       const { reason } = req.body;
       const booking = await bookingsService.cancelBooking(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.farmerId || req.user.buyerId || req.user.userId,
         reason || 'Cancelled by user'
       );

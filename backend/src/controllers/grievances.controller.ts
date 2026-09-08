@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { grievancesService } from '../services/grievances.service.js';
 import { sendSuccess } from '../utils/response.js';
 import { UnauthorizedError } from '../utils/errors.js';
+import { getParam } from '../utils/params.js';
 
 export class GrievancesController {
   async getGrievances(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -17,7 +18,7 @@ export class GrievancesController {
 
   async getGrievanceById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const grievance = await grievancesService.getGrievanceById(req.params.id);
+      const grievance = await grievancesService.getGrievanceById(getParam(req, 'id'));
       sendSuccess(res, grievance);
     } catch (err) {
       next(err);
@@ -39,7 +40,7 @@ export class GrievancesController {
       if (!req.user) throw new UnauthorizedError();
       const { resolution, status } = req.body;
       const updated = await grievancesService.resolveGrievance(
-        req.params.id,
+        getParam(req, 'id'),
         req.user.profileId,
         resolution,
         status

@@ -1,18 +1,20 @@
 import { BuyerDemand } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class DemandsRepository {
   async findAll(filters?: { buyerId?: string; cropId?: string; status?: string }): Promise<BuyerDemand[]> {
-    try {
-      let query = supabaseService.from('buyer_demands').select('*');
-      if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
-      if (filters?.cropId) query = query.eq('crop_id', filters.cropId);
-      if (filters?.status) query = query.eq('status', filters.status);
-      const { data, error } = await query;
-      if (!error && data) return data as BuyerDemand[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseService.from('buyer_demands').select('*');
+        if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
+        if (filters?.cropId) query = query.eq('crop_id', filters.cropId);
+        if (filters?.status) query = query.eq('status', filters.status);
+        const { data, error } = await query;
+        if (!error && data) return data as BuyerDemand[];
+      } catch {
+        // Fallback
+      }
     }
 
     return memoryDb.demands.filter((d) => {
@@ -24,11 +26,13 @@ export class DemandsRepository {
   }
 
   async findById(id: string): Promise<BuyerDemand | null> {
-    try {
-      const { data, error } = await supabaseService.from('buyer_demands').select('*').eq('id', id).single();
-      if (!error && data) return data as BuyerDemand[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('buyer_demands').select('*').eq('id', id).single();
+        if (!error && data) return data as unknown as BuyerDemand;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.demands.find((d) => d.id === id) || null;
   }
@@ -43,15 +47,17 @@ export class DemandsRepository {
       updated_at: now,
     };
 
-    try {
-      const { data, error } = await supabaseService
-        .from('buyer_demands')
-        .insert(newDemand)
-        .select()
-        .single();
-      if (!error && data) return data as BuyerDemand;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('buyer_demands')
+          .insert(newDemand)
+          .select()
+          .single();
+        if (!error && data) return data as BuyerDemand;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.demands.unshift(newDemand);
@@ -59,16 +65,18 @@ export class DemandsRepository {
   }
 
   async update(id: string, updates: Partial<BuyerDemand>): Promise<BuyerDemand | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('buyer_demands')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as BuyerDemand;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('buyer_demands')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data as BuyerDemand;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.demands.find((d) => d.id === id);
@@ -78,10 +86,12 @@ export class DemandsRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    try {
-      await supabaseService.from('buyer_demands').delete().eq('id', id);
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService.from('buyer_demands').delete().eq('id', id);
+      } catch {
+        // Fallback
+      }
     }
     const idx = memoryDb.demands.findIndex((d) => d.id === id);
     if (idx !== -1) {

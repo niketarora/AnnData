@@ -1,18 +1,20 @@
 import { AppNotification } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class NotificationsRepository {
   async findByUserId(userId: string): Promise<AppNotification[]> {
-    try {
-      const { data, error } = await supabaseService
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-      if (!error && data) return data as AppNotification[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+        if (!error && data) return data as AppNotification[];
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.notifications
       .filter((n) => n.user_id === userId)
@@ -26,15 +28,17 @@ export class NotificationsRepository {
       created_at: new Date().toISOString(),
     };
 
-    try {
-      const { data, error } = await supabaseService
-        .from('notifications')
-        .insert(newNotification)
-        .select()
-        .single();
-      if (!error && data) return data as AppNotification;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('notifications')
+          .insert(newNotification)
+          .select()
+          .single();
+        if (!error && data) return data as AppNotification;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.notifications.unshift(newNotification);
@@ -42,14 +46,16 @@ export class NotificationsRepository {
   }
 
   async markAsRead(id: string, userId: string): Promise<boolean> {
-    try {
-      await supabaseService
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', id)
-        .eq('user_id', userId);
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService
+          .from('notifications')
+          .update({ read: true })
+          .eq('id', id)
+          .eq('user_id', userId);
+      } catch {
+        // Fallback
+      }
     }
 
     const notif = memoryDb.notifications.find((n) => n.id === id && n.user_id === userId);
@@ -61,13 +67,15 @@ export class NotificationsRepository {
   }
 
   async markAllAsRead(userId: string): Promise<void> {
-    try {
-      await supabaseService
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', userId);
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        await supabaseService
+          .from('notifications')
+          .update({ read: true })
+          .eq('user_id', userId);
+      } catch {
+        // Fallback
+      }
     }
 
     for (const notif of memoryDb.notifications) {

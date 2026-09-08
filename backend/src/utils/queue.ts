@@ -44,7 +44,7 @@ export function calculateQueueEstimate(input: QueueEstimateInput): QueueEstimate
   let departureState: DepartureState = 'WAIT';
   let departureText = 'Wait at farm. Gate congestion reported.';
 
-  if (delay > 30) {
+  if (delay > 0) {
     departureState = 'WAIT';
     departureText = `Mandi delay +${delay}m. Remain at farm.`;
   } else if (timeUntilService <= travelEta + buffer) {

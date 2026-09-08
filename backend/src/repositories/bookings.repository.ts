@@ -1,17 +1,19 @@
 import { Booking } from '../types/index.js';
 import { memoryDb } from './dbStore.js';
-import { supabaseService } from '../config/supabase.js';
+import { supabaseService, isSupabaseConfigured } from '../config/supabase.js';
 
 export class BookingsRepository {
   async findAll(filters?: { farmerId?: string; buyerId?: string; status?: string }): Promise<Booking[]> {
-    try {
-      let query = supabaseService.from('bookings').select('*');
-      if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
-      if (filters?.status) query = query.eq('status', filters.status);
-      const { data, error } = await query;
-      if (!error && data) return data as Booking[];
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        let query = supabaseService.from('bookings').select('*');
+        if (filters?.buyerId) query = query.eq('buyer_id', filters.buyerId);
+        if (filters?.status) query = query.eq('status', filters.status);
+        const { data, error } = await query;
+        if (!error && data) return data as Booking[];
+      } catch {
+        // Fallback
+      }
     }
 
     return memoryDb.bookings.filter((b) => {
@@ -26,11 +28,13 @@ export class BookingsRepository {
   }
 
   async findById(id: string): Promise<Booking | null> {
-    try {
-      const { data, error } = await supabaseService.from('bookings').select('*').eq('id', id).single();
-      if (!error && data) return data as Booking;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('bookings').select('*').eq('id', id).single();
+        if (!error && data) return data as Booking;
+      } catch {
+        // Fallback
+      }
     }
     return memoryDb.bookings.find((b) => b.id === id) || null;
   }
@@ -45,11 +49,13 @@ export class BookingsRepository {
       updated_at: now,
     };
 
-    try {
-      const { data, error } = await supabaseService.from('bookings').insert(newBooking).select().single();
-      if (!error && data) return data as Booking;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService.from('bookings').insert(newBooking).select().single();
+        if (!error && data) return data as Booking;
+      } catch {
+        // Fallback
+      }
     }
 
     memoryDb.bookings.unshift(newBooking);
@@ -57,16 +63,18 @@ export class BookingsRepository {
   }
 
   async update(id: string, updates: Partial<Booking>): Promise<Booking | null> {
-    try {
-      const { data, error } = await supabaseService
-        .from('bookings')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-      if (!error && data) return data as Booking;
-    } catch {
-      // Fallback
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabaseService
+          .from('bookings')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+        if (!error && data) return data as Booking;
+      } catch {
+        // Fallback
+      }
     }
 
     const item = memoryDb.bookings.find((b) => b.id === id);

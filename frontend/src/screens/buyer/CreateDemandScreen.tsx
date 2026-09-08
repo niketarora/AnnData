@@ -7,7 +7,7 @@ import { useAppStore } from '../../store';
 import { AppHeader } from '../../components/common/AppHeader';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { BuyerStackParamList, CropType } from '../../types';
-import { marketMockService } from '../../services';
+import { marketService } from '../../services';
 
 export const CreateDemandScreen: React.FC = () => {
   const [state] = useAppStore();
@@ -25,7 +25,7 @@ export const CreateDemandScreen: React.FC = () => {
   const handleSubmitDemand = async () => {
     setLoading(true);
     try {
-      await marketMockService.createBuyerDemand({
+      await marketService.createBuyerDemand({
         buyerId: state.buyer.id,
         buyerName: state.buyer.name,
         mandiName: state.buyer.marketName,
